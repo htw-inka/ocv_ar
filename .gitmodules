@@ -1,0 +1,3 @@
+[submodule "external/mob_gpgpu"]
+	path = external/mob_gpgpu
+	url = ../mob_gpgpu/
