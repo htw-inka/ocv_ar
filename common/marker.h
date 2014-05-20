@@ -21,13 +21,13 @@ public:
     void setId(int newId) { id = newId; };
     int getId() const { return id; };
     
-    Point2fVec getPoints() const { return points; };
-    void addPoint(cv::Point2f p) { points.push_back(p); };
-    void clearPoints() { points.clear(); };
+    Point2fVec getPoints() const { return points; }
+    void addPoint(cv::Point2f p) { points.push_back(p); }
+    void clearPoints() { points.clear(); }
     void rotatePoints(int rot);
     
-    cv::Point2f getCentroid() const { return centroid; };
-    float getPerimeterRadius() const { return perimeterRad; };
+    cv::Point2f getCentroid() const { return centroid; }
+    float getPerimeterRadius() const { return perimeterRad; }
     
     const cv::Mat &getRVec() const { return rVec; };
     const cv::Mat &getTVec() const { return tVec; };

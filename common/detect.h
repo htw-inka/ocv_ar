@@ -2,6 +2,7 @@
 #define OCV_AR_DETECT_H
 
 #include <set>
+#include <iostream>
 
 #include "conf.h"
 #include "types.h"
@@ -13,17 +14,24 @@ namespace ocv_ar {
 
 class Detect {
 public:
+    Detect();
+    ~Detect();
+    
+    void prepare(int frameW, int frameH, int frameChan, int cvtType = -1);
     
     void setCamIntrinsics(cv::Mat &camIntrinsics);
     
     void setFrameOutputLevel(FrameProcLevel level);
     
     void setInputFrame(cv::Mat *frame);
-    cv::Mat *getOutputFrame() const { return outFrame; }
     
     void processFrame();
     
+    cv::Mat *getOutputFrame() const { return outFrame; }
+    
     set<Marker *> getMarkers() const { return markers; };
+    
+    bool isPrepared() const { return prepared; }
     
 private:
     void preprocess();
@@ -42,7 +50,7 @@ private:
     
     void estimatePositions();
     
-    void setOutputFrameOnReqProcLevel(FrameProcLevel reqLvl, cv::Mat *srcFrame = NULL);
+    void setOutputFrameOnCurProcLevel(FrameProcLevel curLvl, cv::Mat *srcFrame);
     
     int readMarkerCode(cv::Mat &img, int *validRot);
     
@@ -52,8 +60,18 @@ private:
     void drawMarker(cv::Mat &img, const Marker &m);
     
     
+    bool prepared;
+    
+    int inputFrameCvtType;
+    
+    FrameProcLevel outFrameProcLvl;
+
+    cv::Mat *inFrameOrigGray;
     cv::Mat *inFrame;
     cv::Mat *outFrame;
+    
+    int downsampleSizeW;
+    int downsampleSizeH;
     
     set<Marker *> markers;
 };
