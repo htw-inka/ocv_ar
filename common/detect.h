@@ -27,7 +27,7 @@ public:
     
     void processFrame();
     
-    cv::Mat *getOutputFrame() const { return outFrame; }
+    cv::Mat *getOutputFrame() const;
     
     set<Marker *> getMarkers() const { return markers; };
     

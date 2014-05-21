@@ -113,6 +113,12 @@ void Detect::processFrame() {
     preprocess();
 }
 
+cv::Mat *Detect::getOutputFrame() const {
+    if (outFrameProcLvl == DEFAULT) return NULL;
+
+    return outFrame;
+}
+
 #pragma mark private methods
 
 void Detect::preprocess() {
