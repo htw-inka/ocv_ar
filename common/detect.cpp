@@ -1,5 +1,7 @@
 #include "detect.h"
 
+#include "tools.h"
+
 using namespace ocv_ar;
 
 #pragma mark public methods
@@ -68,9 +70,7 @@ void Detect::prepare(int frameW, int frameH, int frameChan, int cvtType) {
     inputFrameCvtType = cvtType;
     prepared = true;
     
-    cout << "ocv_ar::Detect - prepared for frames: "
-         << frameW << "x" << frameH << ", " << frameChan << " channels" << endl;
-    cout << "ocv_ar::Detect - input frame color convert type: " << inputFrameCvtType << endl;
+    printf("ocv_ar::Detect - prepared for frames: %dx%d (%d channels)\n", frameW, frameH, frameChan);
 }
 
 void Detect::setCamIntrinsics(cv::Mat &camIntrinsics) {
@@ -97,8 +97,7 @@ void Detect::setFrameOutputLevel(FrameProcLevel level) {
     
     outFrame = new cv::Mat(outH, outW, CV_8UC1);
     
-    cout << "ocv_ar::Detect - set output frame level: "
-         << level << " (output frame size " << outW << "x" << outH << ")" << endl;
+    printf("ocv_ar::Detect - set output frame level: %d (output frame size %dx%d)", level, outW, outH);
 }
 
 void Detect::setInputFrame(cv::Mat *frame) {
@@ -113,6 +112,7 @@ void Detect::processFrame() {
     preprocess();
     performThreshold();
     findContours();
+    findMarkerCandidates();
 }
 
 cv::Mat *Detect::getOutputFrame() const {
@@ -181,14 +181,64 @@ void Detect::findContours() {
 }
 
 void Detect::findMarkerCandidates() {
+    const float minContourLengthAllowed = OCV_AR_CONF_MIN_CONTOUR_LENGTH * OCV_AR_CONF_MIN_CONTOUR_LENGTH;
     
+	possibleMarkers.clear();
+	PointVec  approxCurve;
+    
+	for (ContourVec::iterator it = curContours.begin();
+         it != curContours.end();
+         ++it)
+	{
+		PointVec contour = *it;
+		// Approximate to a polygon
+		float eps = contour.size() * 0.05f;
+		cv::approxPolyDP(contour, approxCurve, eps, true);
+        
+		// We interested only in polygons that contains only four points
+		if (approxCurve.size() != 4 || !cv::isContourConvex(approxCurve)) continue;
+
+		// Ensure that the distance between consecutive points is large enough
+		float minDist = numeric_limits<float>::max();
+		for (int i = 0; i < 4; i++) {
+			cv::Point side = approxCurve[i] - approxCurve[(i+1)%4];
+			float squaredSideLength = side.dot(side);
+			minDist = min(minDist, squaredSideLength);
+		}
+        
+		if (minDist < minContourLengthAllowed) continue;
+        
+		// Create new marker candidate
+		// Fill it with the points of the curve
+		// The Marker constructor will also sort the points in anti-clockwise order
+		Marker markerCand(approxCurve);
+        
+		// Add the marker candidate
+		possibleMarkers.push_back(markerCand);
+    }
+
+    printf("Num. marker candidates: %lu\n", possibleMarkers.size());
+    
+    discardDuplicateMarkers(possibleMarkers);
+    
+    printf("Num. marker candidates without duplicates: %lu\n", possibleMarkers.size());
+    
+	// draw markers if necessary
+	if (outFrameProcLvl == POSS_MARKERS) {
+		inFrame->copyTo(*outFrame);
+        //		outFrame->setTo(cv::Scalar(0, 0, 0, 255));	// clear: fill black
+        
+		// draw each marker candidate
+		for (vector<Marker>::iterator it = possibleMarkers.begin();
+             it != possibleMarkers.end();
+             ++it)
+		{
+			drawMarker(*outFrame, *it);
+		}
+	}
 }
 
 void Detect::checkMarkerCandidates() {
-    
-}
-
-void Detect::discardDuplicateMarkers() {
     
 }
 
@@ -196,11 +246,37 @@ void Detect::estimatePositions() {
     
 }
 
-void Detect::setOutputFrameOnCurProcLevel(FrameProcLevel curLvl, cv::Mat *srcFrame) {
-    assert(srcFrame);
+void Detect::discardDuplicateMarkers(vector<Marker> &markerList) {
+    const float maxDuplDistSquared = OCV_AR_CONF_MAX_DUPLICATE_DIST * OCV_AR_CONF_MAX_DUPLICATE_DIST;
     
-    if (curLvl == outFrameProcLvl) {
-        srcFrame->copyTo(*outFrame);
+    vector<Marker>::iterator toDel = markerList.end();  // iterator for elem. that will be removed
+    for (vector<Marker>::iterator cur = markerList.begin();
+         cur != markerList.end();)
+    {
+        for (vector<Marker>::iterator other = markerList.begin();
+             other != markerList.end();
+             ++other)
+        {
+            if (cur == other) continue;
+            
+            const float dist = Tools::distSquared(cur->getCentroid(), other->getCentroid());
+            
+            // mark for deletion if the distance is close and the current marker is bigger
+            if (dist <= maxDuplDistSquared && cur->getPerimeterRadius() >= other->getPerimeterRadius()) {
+                printf("Will remove duplicate! dist = %f, r1 = %f, r2 = %f \n",
+                       dist, cur->getPerimeterRadius(), other->getPerimeterRadius());
+                
+                toDel = cur;
+                break;
+            }
+        }
+        
+        if (toDel != markerList.end()) {
+            cur = markerList.erase(toDel);  // advances the iterator
+            toDel = markerList.end();       // reset
+        } else {
+            ++cur;
+        }
     }
 }
 
@@ -216,6 +292,33 @@ int Detect::markerCodeToId(const cv::Mat &m, int dir) const {
     return 0;
 }
 
-void Detect::drawMarker(cv::Mat &img, const Marker &m) {
+void Detect::setOutputFrameOnCurProcLevel(FrameProcLevel curLvl, cv::Mat *srcFrame) {
+    assert(srcFrame);
     
+    if (curLvl == outFrameProcLvl) {
+        srcFrame->copyTo(*outFrame);
+    }
+}
+
+void Detect::drawMarker(cv::Mat &img, const Marker &m) {
+	// draw outline
+	Point2fVec markerPts = m.getPoints();
+	const int numPts = markerPts.size();
+	cv::Scalar white(255, 255, 255, 255);
+	for (int i = 0; i < numPts; i++) {
+		cv::line(img, markerPts[i], markerPts[(i + 1) % numPts], white);
+	}
+    
+	// draw centroid
+	cv::Scalar green(0, 255, 0, 255);
+	cv::Point cross1(2, 2);
+	cv::Point cross2(2, -2);
+	cv::Point c = m.getCentroid();
+	cv::line(img, c - cross1, c + cross1, green);
+	cv::line(img, c + cross2, c - cross2, green);
+    
+	// draw perimeter
+	cv::Scalar blue(0, 0, 255, 255);
+	cv::circle(img, c, m.getPerimeterRadius(), blue);
+
 }

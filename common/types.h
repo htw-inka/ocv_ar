@@ -3,12 +3,16 @@
 
 #include <vector>
 
+#include <opencv2/opencv.hpp>
+
 namespace ocv_ar {
     typedef enum _FrameProcLevel {
         DEFAULT = -1,
         PREPROC,
         THRESH,
-        CONTOURS
+        CONTOURS,
+        POSS_MARKERS,        // possible marker candidates
+        DETECTED_MARKERS
     } FrameProcLevel;
     
     typedef std::vector<cv::Point> PointVec;

@@ -16,5 +16,7 @@
 #define OCV_AR_CONF_THRESH_C            9.0f
 
 #define OCV_AR_CONF_MIN_CONTOUR_PTS     4
+#define OCV_AR_CONF_MIN_CONTOUR_LENGTH  30.0f
+#define OCV_AR_CONF_MAX_DUPLICATE_DIST  2.0f
 
 #endif

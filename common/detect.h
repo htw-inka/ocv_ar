@@ -1,8 +1,10 @@
 #ifndef OCV_AR_DETECT_H
 #define OCV_AR_DETECT_H
 
-#include <set>
+#include <vector>
 #include <iostream>
+
+#include <opencv2/opencv.hpp>
 
 #include "conf.h"
 #include "types.h"
@@ -29,7 +31,7 @@ public:
     
     cv::Mat *getOutputFrame() const;
     
-    set<Marker *> getMarkers() const { return markers; };
+    vector<Marker> getMarkers() const { return foundMarkers; }
     
     bool isPrepared() const { return prepared; }
     
@@ -46,7 +48,7 @@ private:
     
     void checkMarkerCandidates();
     
-    void discardDuplicateMarkers();
+    void discardDuplicateMarkers(vector<Marker> &markerList);
     
     void estimatePositions();
     
@@ -75,7 +77,8 @@ private:
     int downsampleSizeW;
     int downsampleSizeH;
     
-    set<Marker *> markers;
+    vector<Marker> possibleMarkers;
+    vector<Marker> foundMarkers;  // maps marker id -> marker object
 };
 
 }
