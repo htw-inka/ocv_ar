@@ -4,14 +4,12 @@
 #include <vector>
 
 #include "conf.h"
+#include "types.h"
 #include "marker.h"
 
 using namespace std;
 
 namespace ocv_ar {
-    
-typedef vector<cv::Point> PointVec;
-typedef vector<cv::Point2f> Point2fVec;
 
 class Marker {
 public:

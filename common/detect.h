@@ -70,6 +70,8 @@ private:
     cv::Mat *inFrame;
     cv::Mat *outFrame;
     
+    ContourVec curContours;
+    
     int downsampleSizeW;
     int downsampleSizeH;
     

@@ -15,5 +15,6 @@
 #define OCV_AR_CONF_THRESH_BLOCK_SIZE   5
 #define OCV_AR_CONF_THRESH_C            9.0f
 
+#define OCV_AR_CONF_MIN_CONTOUR_PTS     4
 
 #endif

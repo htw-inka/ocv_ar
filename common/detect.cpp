@@ -112,6 +112,7 @@ void Detect::setInputFrame(cv::Mat *frame) {
 void Detect::processFrame() {
     preprocess();
     performThreshold();
+    findContours();
 }
 
 cv::Mat *Detect::getOutputFrame() const {
@@ -155,7 +156,28 @@ void Detect::performThreshold() {
 //}
 
 void Detect::findContours() {
+	// find contours
+	ContourVec allContours;
+	cv::findContours(*inFrame, allContours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE); // CV_RETR_LIST or CV_RETR_EXTERNAL
+
+	// filter out contours consisting of
+	// less than <minContourPointsAllowed> points
+	curContours.clear();
+	for (ContourVec::iterator it = allContours.begin();
+         it != allContours.end();
+         ++it)
+	{
+		if (it->size() >= OCV_AR_CONF_MIN_CONTOUR_PTS) {
+			curContours.push_back(*it);
+		}
+	}
     
+	// draw contours if necessary
+	if (outFrameProcLvl == CONTOURS) {
+        //		LOGINFO("Num. contours: %d", curContours.size());
+		outFrame->setTo(cv::Scalar(0, 0, 0, 255));	// clear: fill black
+		cv::drawContours(*outFrame, curContours, -1, cv::Scalar(255, 255, 255, 255));
+	}
 }
 
 void Detect::findMarkerCandidates() {
