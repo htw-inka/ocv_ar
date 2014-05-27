@@ -5,6 +5,7 @@ namespace ocv_ar {
     typedef enum _FrameProcLevel {
         DEFAULT = -1,
         PREPROC,
+        THRESH
     } FrameProcLevel;
 }
 

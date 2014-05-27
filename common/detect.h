@@ -38,7 +38,7 @@ private:
     
     void performThreshold();
     
-    void threshPostProc();
+//    void threshPostProc();
     
     void findContours();
     

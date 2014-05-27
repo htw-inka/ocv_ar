@@ -12,5 +12,8 @@
 //#define OCV_AR_CONF_RESIZE_W 640
 //#define OCV_AR_CONF_RESIZE_H 360
 
+#define OCV_AR_CONF_THRESH_BLOCK_SIZE   5
+#define OCV_AR_CONF_THRESH_C            9.0f
+
 
 #endif

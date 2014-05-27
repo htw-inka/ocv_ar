@@ -111,6 +111,7 @@ void Detect::setInputFrame(cv::Mat *frame) {
 
 void Detect::processFrame() {
     preprocess();
+    performThreshold();
 }
 
 cv::Mat *Detect::getOutputFrame() const {
@@ -138,12 +139,20 @@ void Detect::preprocess() {
 }
 
 void Detect::performThreshold() {
+	cv::adaptiveThreshold(*inFrame,
+                          *inFrame,
+                          255,
+                          cv::ADAPTIVE_THRESH_MEAN_C, // ADAPTIVE_THRESH_GAUSSIAN_C
+                          cv::THRESH_BINARY_INV,
+                          OCV_AR_CONF_THRESH_BLOCK_SIZE,
+                          OCV_AR_CONF_THRESH_C);
     
+    setOutputFrameOnCurProcLevel(THRESH, inFrame);
 }
 
-void Detect::threshPostProc() {
-    
-}
+//void Detect::threshPostProc() {
+//    
+//}
 
 void Detect::findContours() {
     
