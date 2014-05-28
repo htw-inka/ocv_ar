@@ -19,4 +19,8 @@
 #define OCV_AR_CONF_MIN_CONTOUR_LENGTH  30.0f
 #define OCV_AR_CONF_MAX_DUPLICATE_DIST  2.0f
 
+#define OCV_AR_CONF_MARKER_SIZE_REAL    0.05f   // "real world" marker size in meters
+
+#define OCV_AR_CONF_REFINE_CORNERS_ITER 0
+
 #endif

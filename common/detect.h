@@ -9,6 +9,8 @@
 #include "conf.h"
 #include "types.h"
 #include "marker.h"
+#include "ident.h"
+#include "ident_7bit.h"
 
 using namespace std;
 
@@ -16,7 +18,7 @@ namespace ocv_ar {
 
 class Detect {
 public:
-    Detect();
+    Detect(IdentificatorType identType);
     ~Detect();
     
     void prepare(int frameW, int frameH, int frameChan, int cvtType = -1);
@@ -26,6 +28,10 @@ public:
     void setFrameOutputLevel(FrameProcLevel level);
     
     void setInputFrame(cv::Mat *frame);
+    
+    void setIdentificator(IdentificatorType identType);
+    
+    IdentificatorType getIdentificator() const { return ident ? ident->getType() : NONE; }
     
     void processFrame();
     
@@ -46,7 +52,7 @@ private:
     
     void findMarkerCandidates();
     
-    void checkMarkerCandidates();
+    void identifyMarkers();
     
     void discardDuplicateMarkers(vector<Marker> &markerList);
     
@@ -54,10 +60,10 @@ private:
     
     void setOutputFrameOnCurProcLevel(FrameProcLevel curLvl, cv::Mat *srcFrame);
     
-    int readMarkerCode(cv::Mat &img, int *validRot);
-    
-    bool checkMarkerCode(const cv::Mat &m, int dir) const;
-    int markerCodeToId(const cv::Mat &m, int dir) const;
+//    int readMarkerCode(cv::Mat &img, int *validRot);
+//    
+//    bool checkMarkerCode(const cv::Mat &m, int dir) const;
+//    int markerCodeToId(const cv::Mat &m, int dir) const;
     
     void drawMarker(cv::Mat &img, const Marker &m);
     
@@ -78,7 +84,13 @@ private:
     int downsampleSizeH;
     
     vector<Marker> possibleMarkers;
-    vector<Marker> foundMarkers;  // maps marker id -> marker object
+    vector<Marker> foundMarkers;
+    
+    IdentificatorBase *ident;
+    
+    int normMarkerSize;
+	Point2fVec normMarkerCoord2D;	// standard coordinates for a normalized rectangular marker in 2D
+	Point3fVec normMarkerCoord3D;	// standard coordinates for a normalized rectangular marker in 3D
 };
 
 }

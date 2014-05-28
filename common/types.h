@@ -15,6 +15,13 @@ namespace ocv_ar {
         DETECTED_MARKERS
     } FrameProcLevel;
     
+    typedef enum _IdentificatorType {
+        NONE = -1,
+        CODE_7BIT,
+        CODE_8BIT,
+        TEMPLATE
+    } IdentificatorType;
+    
     typedef std::vector<cv::Point> PointVec;
     typedef std::vector<cv::Point2f> Point2fVec;
     typedef std::vector<cv::Point3f> Point3fVec;

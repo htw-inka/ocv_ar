@@ -6,7 +6,7 @@ using namespace ocv_ar;
 
 #pragma mark public methods
 
-Detect::Detect() {
+Detect::Detect(IdentificatorType identType) {
     prepared = false;
     inputFrameCvtType = -1;
     outFrameProcLvl = DEFAULT;
@@ -16,6 +16,9 @@ Detect::Detect() {
     outFrame = NULL;
     
     downsampleSizeW = downsampleSizeH = 0;
+    
+    ident = NULL;
+    setIdentificator(identType);
     
 #if !defined(OCV_AR_CONF_DOWNSAMPLE) && defined(OCV_AR_CONF_RESIZE_W) && defined(OCV_AR_CONF_RESIZE_H)
     downsampleSizeW = OCV_AR_CONF_RESIZE_W;
@@ -27,6 +30,42 @@ Detect::~Detect() {
     if (inFrameOrigGray) delete inFrameOrigGray;
     if (inFrame) delete inFrame;
     if (outFrame) delete outFrame;
+    if (ident) delete ident;
+}
+
+void Detect::setIdentificator(IdentificatorType identType) {
+    if (ident) delete ident;
+    
+    switch (identType) {
+        case CODE_7BIT:
+            ident = new Identificator7BitCode();
+            break;
+            
+        default:
+            ident = NULL;
+            break;
+    }
+    
+    normMarkerCoord2D.clear();
+    normMarkerCoord3D.clear();
+    
+    if (ident) {
+        normMarkerSize = ident->getRequiredMarkerSize();
+        
+        const int s = normMarkerSize - 1;
+        normMarkerCoord2D.push_back(cv::Point2f(0, 0));
+        normMarkerCoord2D.push_back(cv::Point2f(s, 0));
+        normMarkerCoord2D.push_back(cv::Point2f(s, s));
+        normMarkerCoord2D.push_back(cv::Point2f(0, s));
+        
+        const float sm = OCV_AR_CONF_MARKER_SIZE_REAL;	// size in meters
+        normMarkerCoord3D.push_back(cv::Point3f(-0.5f * sm,  0.5f * sm, 0.0f));
+        normMarkerCoord3D.push_back(cv::Point3f( 0.5f * sm,  0.5f * sm, 0.0f));
+        normMarkerCoord3D.push_back(cv::Point3f( 0.5f * sm, -0.5f * sm, 0.0f));
+        normMarkerCoord3D.push_back(cv::Point3f(-0.5f * sm, -0.5f * sm, 0.0f));
+    } else {
+        normMarkerSize = 0;
+    }
 }
 
 void Detect::prepare(int frameW, int frameH, int frameChan, int cvtType) {
@@ -113,6 +152,7 @@ void Detect::processFrame() {
     performThreshold();
     findContours();
     findMarkerCandidates();
+    identifyMarkers();
 }
 
 cv::Mat *Detect::getOutputFrame() const {
@@ -163,7 +203,7 @@ void Detect::findContours() {
 	// filter out contours consisting of
 	// less than <minContourPointsAllowed> points
 	curContours.clear();
-	for (ContourVec::iterator it = allContours.begin();
+	for (ContourVec::const_iterator it = allContours.begin();
          it != allContours.end();
          ++it)
 	{
@@ -186,7 +226,7 @@ void Detect::findMarkerCandidates() {
 	possibleMarkers.clear();
 	PointVec  approxCurve;
     
-	for (ContourVec::iterator it = curContours.begin();
+	for (ContourVec::const_iterator it = curContours.begin();
          it != curContours.end();
          ++it)
 	{
@@ -217,11 +257,11 @@ void Detect::findMarkerCandidates() {
 		possibleMarkers.push_back(markerCand);
     }
 
-    printf("Num. marker candidates: %lu\n", possibleMarkers.size());
+    printf("ocv_ar::Detect - Num. marker candidates: %lu\n", possibleMarkers.size());
     
     discardDuplicateMarkers(possibleMarkers);
     
-    printf("Num. marker candidates without duplicates: %lu\n", possibleMarkers.size());
+    printf("ocv_ar::Detect - Num. marker candidates without duplicates: %lu\n", possibleMarkers.size());
     
 	// draw markers if necessary
 	if (outFrameProcLvl == POSS_MARKERS) {
@@ -238,8 +278,61 @@ void Detect::findMarkerCandidates() {
 	}
 }
 
-void Detect::checkMarkerCandidates() {
+void Detect::identifyMarkers() {
+    if (!ident) return;
     
+	if (outFrame && outFrameProcLvl == DETECTED_MARKERS) {
+        //		outFrame->setTo(cv::Scalar(0, 0, 0, 255));	// clear: fill black
+		inFrame->copyTo(*outFrame);
+	}
+
+    foundMarkers.clear();
+    
+    // normalize (deskew) all possible markers and identify them
+    for (vector<Marker>::iterator it = possibleMarkers.begin();
+         it != possibleMarkers.end();
+         ++it)
+	{
+        cv::Mat normMarkerImg(normMarkerSize, normMarkerSize, CV_8UC1);
+        
+		// Find the perspective transformation that brings current marker to
+		// rectangular form
+		const cv::Mat perspMat = cv::getPerspectiveTransform(it->getPoints(), normMarkerCoord2D);
+		cv::warpPerspective(*inFrame, normMarkerImg,  perspMat, cv::Size(normMarkerSize, normMarkerSize), cv::INTER_NEAREST);
+		cv::threshold(normMarkerImg, normMarkerImg, 125, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+
+        // try to read the marker code
+        // if this is successfull, it will be saved as the marker's ID
+        // and the marker's corner points will be correctly rotated
+        if (ident->readMarkerCode(normMarkerImg, *it)) {
+            // a valid code could be read -> add this marker to the "found markers"
+            foundMarkers.push_back(*it);
+            
+            // refine corners
+#if OCV_AR_CONF_REFINE_CORNERS_ITER > 0
+            cv::cornerSubPix(*inFrame, it->getPoints(),
+                             cv::Size(5, 5), cv::Size(-1,-1),
+                             cv::TermCriteria(CV_TERMCRIT_ITER, OCV_AR_CONF_REFINE_CORNERS_ITER, 0.1f));	// max. iterations, min. epsilon
+#endif
+            // draw marker
+            if (outFrame && outFrameProcLvl == DETECTED_MARKERS) {
+                float r = it->getPerimeterRadius();
+                cv::Point o = it->getCentroid() - (0.5f * cv::Point2f(r, r));
+                printf("ocv_ar::Detect - drawing marker with id %d at pos %d, %d", it->getId(), o.x, o.y);
+                cv::Rect roi(o, normMarkerImg.size());
+                cv::rectangle(*outFrame, roi, cv::Scalar(255,255,255,255));
+                cv::Mat dstMat = (*outFrame)(roi);
+                normMarkerImg.copyTo(dstMat);
+                
+                drawMarker(*outFrame, *it);
+                
+                //			LOGINFO("pers. mat.:");
+                //			for (int i = 0; i < perspMat.rows; i++) {
+                //				LOGINFO("%f\t%f\t%f", perspMat.at<float>(i, 0), perspMat.at<float>(i, 1), perspMat.at<float>(i, 2));
+                //			}
+            }
+        }
+    }
 }
 
 void Detect::estimatePositions() {
@@ -280,17 +373,17 @@ void Detect::discardDuplicateMarkers(vector<Marker> &markerList) {
     }
 }
 
-int Detect::readMarkerCode(cv::Mat &img, int *validRot) {
-    return 0;
-}
-
-bool Detect::checkMarkerCode(const cv::Mat &m, int dir) const {
-    return false;
-}
-
-int Detect::markerCodeToId(const cv::Mat &m, int dir) const {
-    return 0;
-}
+//int Detect::readMarkerCode(cv::Mat &img, int *validRot) {
+//    return 0;
+//}
+//
+//bool Detect::checkMarkerCode(const cv::Mat &m, int dir) const {
+//    return false;
+//}
+//
+//int Detect::markerCodeToId(const cv::Mat &m, int dir) const {
+//    return 0;
+//}
 
 void Detect::setOutputFrameOnCurProcLevel(FrameProcLevel curLvl, cv::Mat *srcFrame) {
     assert(srcFrame);
@@ -303,7 +396,7 @@ void Detect::setOutputFrameOnCurProcLevel(FrameProcLevel curLvl, cv::Mat *srcFra
 void Detect::drawMarker(cv::Mat &img, const Marker &m) {
 	// draw outline
 	Point2fVec markerPts = m.getPoints();
-	const int numPts = markerPts.size();
+	const int numPts = (int)markerPts.size();
 	cv::Scalar white(255, 255, 255, 255);
 	for (int i = 0; i < numPts; i++) {
 		cv::line(img, markerPts[i], markerPts[(i + 1) % numPts], white);
