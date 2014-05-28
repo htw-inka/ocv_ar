@@ -56,6 +56,8 @@ void Marker::calcShapeProperties() {
 #pragma mark private methods
 
 void Marker::init() {
+    id = -1;
+    
 	rVec.create(3, 1, CV_32F);
 	tVec.create(3, 1, CV_32F);
     

@@ -13,6 +13,7 @@ Detect::Detect(IdentificatorType identType) {
     
     inFrameOrigGray = NULL;
     inFrame = NULL;
+    procFrame= NULL;
     outFrame = NULL;
     
     downsampleSizeW = downsampleSizeH = 0;
@@ -29,6 +30,7 @@ Detect::Detect(IdentificatorType identType) {
 Detect::~Detect() {
     if (inFrameOrigGray) delete inFrameOrigGray;
     if (inFrame) delete inFrame;
+    if (procFrame) delete procFrame;
     if (outFrame) delete outFrame;
     if (ident) delete ident;
 }
@@ -75,23 +77,28 @@ void Detect::prepare(int frameW, int frameH, int frameChan, int cvtType) {
     if (inFrameOrigGray) delete inFrameOrigGray;
     inFrameOrigGray = new cv::Mat(frameH, frameW, CV_8UC1);
     
-    // alloc mem for downsampled image in grayscale format
+    // alloc mem for downsampled images in grayscale format
+    if (inFrame) {
+        delete inFrame;
+        inFrame = NULL;
+    }
+    if (procFrame) {
+        delete procFrame;
+        procFrame = NULL;
+    }
+    
 #ifdef OCV_AR_CONF_DOWNSAMPLE
     int frac = pow(2, OCV_AR_CONF_DOWNSAMPLE);
-    int downW = frameW / frac;
-    int downH = frameH / frac;
-
-    if (inFrame) delete inFrame;
-    
-    inFrame = new cv::Mat(downH, downW, CV_8UC1);
+    downsampleSizeW = frameW / frac;
+    downsampleSizeH = frameH / frac;
 #elif defined(OCV_AR_CONF_RESIZE_W) && defined(OCV_AR_CONF_RESIZE_H)
     assert(downsampleSizeW <= frameW && downsampleSizeH <= frameH);
-    if (!inFrame) {
-        inFrame = new cv::Mat(downsampleSizeH, downsampleSizeW, CV_8UC1);
-    }
 #else
 #error Either OCV_AR_CONF_DOWNSAMPLE or OCV_AR_CONF_RESIZE_W/H must be defined.
 #endif
+    
+    inFrame = new cv::Mat(downsampleSizeH, downsampleSizeW, CV_8UC1);
+    procFrame = new cv::Mat(downsampleSizeH, downsampleSizeW, CV_8UC1);
     
     if (cvtType < 0) {  // guess color convert type
         if (frameChan == 3) {
@@ -110,6 +117,7 @@ void Detect::prepare(int frameW, int frameH, int frameChan, int cvtType) {
     prepared = true;
     
     printf("ocv_ar::Detect - prepared for frames: %dx%d (%d channels)\n", frameW, frameH, frameChan);
+    printf("ocv_ar::Detect - will downscale to: %dx%d\n", downsampleSizeW, downsampleSizeH);
 }
 
 void Detect::setCamIntrinsics(cv::Mat &camIntrinsics) {
@@ -181,14 +189,14 @@ void Detect::preprocess() {
 
 void Detect::performThreshold() {
 	cv::adaptiveThreshold(*inFrame,
-                          *inFrame,
+                          *procFrame,
                           255,
                           cv::ADAPTIVE_THRESH_MEAN_C, // ADAPTIVE_THRESH_GAUSSIAN_C
                           cv::THRESH_BINARY_INV,
                           OCV_AR_CONF_THRESH_BLOCK_SIZE,
                           OCV_AR_CONF_THRESH_C);
     
-    setOutputFrameOnCurProcLevel(THRESH, inFrame);
+    setOutputFrameOnCurProcLevel(THRESH, procFrame);
 }
 
 //void Detect::threshPostProc() {
@@ -198,7 +206,7 @@ void Detect::performThreshold() {
 void Detect::findContours() {
 	// find contours
 	ContourVec allContours;
-	cv::findContours(*inFrame, allContours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE); // CV_RETR_LIST or CV_RETR_EXTERNAL
+	cv::findContours(*procFrame, allContours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE); // CV_RETR_LIST or CV_RETR_EXTERNAL
 
 	// filter out contours consisting of
 	// less than <minContourPointsAllowed> points
@@ -257,15 +265,15 @@ void Detect::findMarkerCandidates() {
 		possibleMarkers.push_back(markerCand);
     }
 
-    printf("ocv_ar::Detect - Num. marker candidates: %lu\n", possibleMarkers.size());
+//    printf("ocv_ar::Detect - Num. marker candidates: %lu\n", possibleMarkers.size());
     
     discardDuplicateMarkers(possibleMarkers);
     
-    printf("ocv_ar::Detect - Num. marker candidates without duplicates: %lu\n", possibleMarkers.size());
+//    printf("ocv_ar::Detect - Num. marker candidates without duplicates: %lu\n", possibleMarkers.size());
     
 	// draw markers if necessary
 	if (outFrameProcLvl == POSS_MARKERS) {
-		inFrame->copyTo(*outFrame);
+		procFrame->copyTo(*outFrame);
         //		outFrame->setTo(cv::Scalar(0, 0, 0, 255));	// clear: fill black
         
 		// draw each marker candidate
@@ -308,6 +316,8 @@ void Detect::identifyMarkers() {
             // a valid code could be read -> add this marker to the "found markers"
             foundMarkers.push_back(*it);
             
+            printf("ocv_ar::Detect - found valid marker with id %d\n", it->getId());
+            
             // refine corners
 #if OCV_AR_CONF_REFINE_CORNERS_ITER > 0
             cv::cornerSubPix(*inFrame, it->getPoints(),
@@ -318,7 +328,7 @@ void Detect::identifyMarkers() {
             if (outFrame && outFrameProcLvl == DETECTED_MARKERS) {
                 float r = it->getPerimeterRadius();
                 cv::Point o = it->getCentroid() - (0.5f * cv::Point2f(r, r));
-                printf("ocv_ar::Detect - drawing marker with id %d at pos %d, %d", it->getId(), o.x, o.y);
+                printf("ocv_ar::Detect - drawing marker with id %d at pos %d, %d\n", it->getId(), o.x, o.y);
                 cv::Rect roi(o, normMarkerImg.size());
                 cv::rectangle(*outFrame, roi, cv::Scalar(255,255,255,255));
                 cv::Mat dstMat = (*outFrame)(roi);
@@ -356,8 +366,8 @@ void Detect::discardDuplicateMarkers(vector<Marker> &markerList) {
             
             // mark for deletion if the distance is close and the current marker is bigger
             if (dist <= maxDuplDistSquared && cur->getPerimeterRadius() >= other->getPerimeterRadius()) {
-                printf("Will remove duplicate! dist = %f, r1 = %f, r2 = %f \n",
-                       dist, cur->getPerimeterRadius(), other->getPerimeterRadius());
+//                printf("ocv_ar::Detect - will remove duplicate! dist = %f, r1 = %f, r2 = %f \n",
+//                       dist, cur->getPerimeterRadius(), other->getPerimeterRadius());
                 
                 toDel = cur;
                 break;

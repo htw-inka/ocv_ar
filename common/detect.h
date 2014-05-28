@@ -74,9 +74,10 @@ private:
     
     FrameProcLevel outFrameProcLvl;
 
-    cv::Mat *inFrameOrigGray;
-    cv::Mat *inFrame;
-    cv::Mat *outFrame;
+    cv::Mat *inFrameOrigGray;   // input frame with original size, grayscale
+    cv::Mat *inFrame;           // input frame downsampled, grayscale
+    cv::Mat *procFrame;         // temporary frame during processing, grayscale/binary
+    cv::Mat *outFrame;          // output frame for debugging, grayscale
     
     ContourVec curContours;
     
