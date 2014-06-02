@@ -269,7 +269,7 @@ void Detect::findMarkerCandidates() {
     
     discardDuplicateMarkers(possibleMarkers);
     
-//    printf("ocv_ar::Detect - Num. marker candidates without duplicates: %lu\n", possibleMarkers.size());
+    printf("ocv_ar::Detect - Num. marker candidates without duplicates: %lu\n", possibleMarkers.size());
     
 	// draw markers if necessary
 	if (outFrameProcLvl == POSS_MARKERS) {
@@ -365,9 +365,9 @@ void Detect::discardDuplicateMarkers(vector<Marker> &markerList) {
             const float dist = Tools::distSquared(cur->getCentroid(), other->getCentroid());
             
             // mark for deletion if the distance is close and the current marker is bigger
-            if (dist <= maxDuplDistSquared && cur->getPerimeterRadius() >= other->getPerimeterRadius()) {
-//                printf("ocv_ar::Detect - will remove duplicate! dist = %f, r1 = %f, r2 = %f \n",
-//                       dist, cur->getPerimeterRadius(), other->getPerimeterRadius());
+            if (dist <= maxDuplDistSquared && cur->getPerimeterRadius() < other->getPerimeterRadius()) {
+                printf("ocv_ar::Detect - will remove duplicate! dist = %f, r1 = %f, r2 = %f \n",
+                       dist, cur->getPerimeterRadius(), other->getPerimeterRadius());
                 
                 toDel = cur;
                 break;
