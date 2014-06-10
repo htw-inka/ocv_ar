@@ -319,7 +319,7 @@ void Detect::identifyMarkers() {
             // a valid code could be read -> add this marker to the "found markers"
             foundMarkers.push_back(&(*it));
             
-            printf("ocv_ar::Detect - found valid marker with id %d\n", it->getId());
+//            printf("ocv_ar::Detect - found valid marker with id %d\n", it->getId());
             
             // refine corners
 #if OCV_AR_CONF_REFINE_CORNERS_ITER > 0
@@ -331,7 +331,7 @@ void Detect::identifyMarkers() {
             if (outFrame && outFrameProcLvl == DETECTED_MARKERS) {
                 float r = it->getPerimeterRadius();
                 cv::Point o = it->getCentroid() - (0.5f * cv::Point2f(r, r));
-                printf("ocv_ar::Detect - drawing marker with id %d at pos %d, %d\n", it->getId(), o.x, o.y);
+//                printf("ocv_ar::Detect - drawing marker with id %d at pos %d, %d\n", it->getId(), o.x, o.y);
                 cv::Rect roi(o, normMarkerImg.size());
                 cv::rectangle(*outFrame, roi, cv::Scalar(255,255,255,255));
                 cv::Mat dstMat = (*outFrame)(roi);
@@ -380,8 +380,8 @@ void Detect::discardDuplicateMarkers(vector<Marker> &markerList) {
             
             // mark for deletion if the distance is close and the current marker is bigger
             if (dist <= maxDuplDistSquared && cur->getPerimeterRadius() < other->getPerimeterRadius()) {
-                printf("ocv_ar::Detect - will remove duplicate! dist = %f, r1 = %f, r2 = %f \n",
-                       dist, cur->getPerimeterRadius(), other->getPerimeterRadius());
+//                printf("ocv_ar::Detect - will remove duplicate! dist = %f, r1 = %f, r2 = %f \n",
+//                       dist, cur->getPerimeterRadius(), other->getPerimeterRadius());
                 
                 toDel = cur;
                 break;
