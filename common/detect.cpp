@@ -120,8 +120,9 @@ void Detect::prepare(int frameW, int frameH, int frameChan, int cvtType) {
     printf("ocv_ar::Detect - will downscale to: %dx%d\n", downsampleSizeW, downsampleSizeH);
 }
 
-void Detect::setCamIntrinsics(cv::Mat &camIntrinsics) {
-    
+void Detect::setCamIntrinsics(const cv::Mat &cam, const cv::Mat &dist) {
+    camMat = cam;
+    distCoeff = dist;   // this mat can also be empty
 }
 
 void Detect::setFrameOutputLevel(FrameProcLevel level) {
@@ -161,6 +162,7 @@ void Detect::processFrame() {
     findContours();
     findMarkerCandidates();
     identifyMarkers();
+    estimatePositions();
 }
 
 cv::Mat *Detect::getOutputFrame() const {
@@ -231,6 +233,7 @@ void Detect::findContours() {
 void Detect::findMarkerCandidates() {
     const float minContourLengthAllowed = OCV_AR_CONF_MIN_CONTOUR_LENGTH * OCV_AR_CONF_MIN_CONTOUR_LENGTH;
     
+    foundMarkers.clear();
 	possibleMarkers.clear();
 	PointVec  approxCurve;
     
@@ -294,7 +297,7 @@ void Detect::identifyMarkers() {
 		inFrame->copyTo(*outFrame);
 	}
 
-    foundMarkers.clear();
+//    foundMarkers.clear(); // this is done in findMarkerCandidates()
     
     // normalize (deskew) all possible markers and identify them
     for (vector<Marker>::iterator it = possibleMarkers.begin();
@@ -314,7 +317,7 @@ void Detect::identifyMarkers() {
         // and the marker's corner points will be correctly rotated
         if (ident->readMarkerCode(normMarkerImg, *it)) {
             // a valid code could be read -> add this marker to the "found markers"
-            foundMarkers.push_back(*it);
+            foundMarkers.push_back(&(*it));
             
             printf("ocv_ar::Detect - found valid marker with id %d\n", it->getId());
             
@@ -346,7 +349,18 @@ void Detect::identifyMarkers() {
 }
 
 void Detect::estimatePositions() {
-    
+    for (vector<Marker *>::iterator it = foundMarkers.begin(); it != foundMarkers.end(); ++it) {
+        Marker *marker = *it;
+        
+		cv::Mat rVec;
+		cv::Mat tVec;
+		cv::solvePnP(normMarkerCoord3D, marker->getPoints(),
+					 camMat, distCoeff,
+					 rVec, tVec,
+					 false);
+        
+        marker->updatePoseMat(rVec, tVec);
+    }
 }
 
 void Detect::discardDuplicateMarkers(vector<Marker> &markerList) {
@@ -382,18 +396,6 @@ void Detect::discardDuplicateMarkers(vector<Marker> &markerList) {
         }
     }
 }
-
-//int Detect::readMarkerCode(cv::Mat &img, int *validRot) {
-//    return 0;
-//}
-//
-//bool Detect::checkMarkerCode(const cv::Mat &m, int dir) const {
-//    return false;
-//}
-//
-//int Detect::markerCodeToId(const cv::Mat &m, int dir) const {
-//    return 0;
-//}
 
 void Detect::setOutputFrameOnCurProcLevel(FrameProcLevel curLvl, cv::Mat *srcFrame) {
     assert(srcFrame);

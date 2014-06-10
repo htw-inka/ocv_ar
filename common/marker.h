@@ -35,7 +35,8 @@ public:
     void updatePoseMat(const cv::Mat &r, const cv::Mat &t);
     
 //    const glm::mat4 &getPoseMat() const { return poseMat; };
-//    const float *getPoseMatPtr() const { return poseMat.ptr<float>(); };
+    
+    const float *getPoseMatPtr() const { return poseMat; };
     
     void sortPoints();
     void calcShapeProperties();
@@ -52,6 +53,8 @@ private:
     
     cv::Mat rVec;
     cv::Mat tVec;
+    
+    float poseMat[16];  // 4x4 matrix with model-view-transformation
 //    glm::mat4 poseMat;      // 4x4 matrix with model-view-transformation
 };
 

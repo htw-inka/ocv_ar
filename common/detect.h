@@ -23,7 +23,7 @@ public:
     
     void prepare(int frameW, int frameH, int frameChan, int cvtType = -1);
     
-    void setCamIntrinsics(cv::Mat &camIntrinsics);
+    void setCamIntrinsics(const cv::Mat &camMat, const cv::Mat &distCoeff);
     
     void setFrameOutputLevel(FrameProcLevel level);
     
@@ -37,7 +37,7 @@ public:
     
     cv::Mat *getOutputFrame() const;
     
-    vector<Marker> getMarkers() const { return foundMarkers; }
+    vector<Marker *> getMarkers() const { return foundMarkers; }
     
     bool isPrepared() const { return prepared; }
     
@@ -85,13 +85,16 @@ private:
     int downsampleSizeH;
     
     vector<Marker> possibleMarkers;
-    vector<Marker> foundMarkers;
+    vector<Marker *> foundMarkers;   // holds pointers to correct markers in <possibleMarkers>
     
     IdentificatorBase *ident;
     
     int normMarkerSize;
 	Point2fVec normMarkerCoord2D;	// standard coordinates for a normalized rectangular marker in 2D
 	Point3fVec normMarkerCoord3D;	// standard coordinates for a normalized rectangular marker in 3D
+    
+    cv::Mat camMat;
+    cv::Mat distCoeff;
 };
 
 }
