@@ -98,10 +98,11 @@ static int arParamDecompMat( float source[3][4], float cpara[3][4], float trans[
 
 #pragma mark public methods
 
-Detect::Detect(IdentificatorType identType, float markerSizeM) {
+Detect::Detect(IdentificatorType identType, float markerSizeM, bool flip) {
     if (markerSizeM <= 0.0f) markerSizeM = OCV_AR_CONF_DEFAULT_MARKER_SIZE_REAL;
     
     markerScale = markerSizeM;
+    flipProj = flip;
     prepared = false;
     inputFrameCvtType = -1;
     outFrameProcLvl = DEFAULT;
@@ -543,7 +544,6 @@ void Detect::calcProjMat(float viewW, float viewH) {
     printf("ocv_ar::Detect - calculating projection matrix for view size %dx%d\n",
            (int)viewW, (int)viewH);
     
-    const bool invert = false;
     const float projNear = OCV_AR_CONF_PROJMAT_NEAR_PLANE;
 	const float projFar  = OCV_AR_CONF_PROJMAT_FAR_PLANE;
     
@@ -621,11 +621,18 @@ void Detect::calcProjMat(float viewW, float viewH) {
         + q[i][3];
     }
     
-    if (!invert)
+    if (flipProj)
     {
-        projMat[13] = -projMat[13];
-        projMat[1]  = -projMat[1];
-        projMat[5]  = -projMat[5];
-        projMat[9]  = -projMat[9];
+//        projMat[13] = -projMat[13];
+//        projMat[1]  = -projMat[1];
+//        projMat[5]  = -projMat[5];
+//        projMat[9]  = -projMat[9];
+        
+        projMat[0] = -projMat[0];
+        projMat[4]  = -projMat[4];
+        projMat[8]  = -projMat[8];
+        projMat[12]  = -projMat[12];
     }
+    
+
 }

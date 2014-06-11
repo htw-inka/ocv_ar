@@ -18,7 +18,7 @@ namespace ocv_ar {
 
 class Detect {
 public:
-    Detect(IdentificatorType identType, float markerSizeM = 0.0f);
+    Detect(IdentificatorType identType, float markerSizeM = 0.0f, bool flip = false);
     ~Detect();
     
     void prepare(int frameW, int frameH, int frameChan, int cvtType = -1);
@@ -101,6 +101,7 @@ private:
     
     float markerScale;
     
+    bool flipProj;
     float projMat[16];
     cv::Size projMatUsedSize;
 };
