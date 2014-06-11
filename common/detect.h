@@ -18,7 +18,7 @@ namespace ocv_ar {
 
 class Detect {
 public:
-    Detect(IdentificatorType identType);
+    Detect(IdentificatorType identType, float markerSizeM = 0.0f);
     ~Detect();
     
     void prepare(int frameW, int frameH, int frameChan, int cvtType = -1);
@@ -38,6 +38,10 @@ public:
     cv::Mat *getOutputFrame() const;
     
     vector<Marker *> getMarkers() const { return foundMarkers; }
+    
+    float *getProjMat(float viewW, float viewH);
+    
+    float getMarkerScale() const { return markerScale; }
     
     bool isPrepared() const { return prepared; }
     
@@ -60,12 +64,9 @@ private:
     
     void setOutputFrameOnCurProcLevel(FrameProcLevel curLvl, cv::Mat *srcFrame);
     
-//    int readMarkerCode(cv::Mat &img, int *validRot);
-//    
-//    bool checkMarkerCode(const cv::Mat &m, int dir) const;
-//    int markerCodeToId(const cv::Mat &m, int dir) const;
-    
     void drawMarker(cv::Mat &img, const Marker &m);
+    
+    void calcProjMat(float viewW, float viewH);
     
     
     bool prepared;
@@ -81,6 +82,8 @@ private:
     
     ContourVec curContours;
     
+    int inputFrameW;
+    int inputFrameH;
     int downsampleSizeW;
     int downsampleSizeH;
     
@@ -95,6 +98,11 @@ private:
     
     cv::Mat camMat;
     cv::Mat distCoeff;
+    
+    float markerScale;
+    
+    float projMat[16];
+    cv::Size projMatUsedSize;
 };
 
 }
