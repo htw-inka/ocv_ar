@@ -628,5 +628,4 @@ void Detect::calcProjMat(float viewW, float viewH) {
         projMat[5]  = -projMat[5];
         projMat[9]  = -projMat[9];
     }
-
 }
