@@ -6,6 +6,12 @@
 #include <opencv2/opencv.hpp>
 
 namespace ocv_ar {
+    typedef enum _FlipMode {
+        FLIP_NONE,
+        FLIP_H, // horizontal flip
+        FLIP_V  // vertical flip
+    } FlipMode;
+    
     typedef enum _FrameProcLevel {
         DEFAULT = -1,
         PREPROC,

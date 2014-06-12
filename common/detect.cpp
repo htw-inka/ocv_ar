@@ -98,8 +98,10 @@ static int arParamDecompMat( float source[3][4], float cpara[3][4], float trans[
 
 #pragma mark public methods
 
-Detect::Detect(IdentificatorType identType, float markerSizeM, bool flip) {
+Detect::Detect(IdentificatorType identType, float markerSizeM, FlipMode flip) {
     if (markerSizeM <= 0.0f) markerSizeM = OCV_AR_CONF_DEFAULT_MARKER_SIZE_REAL;
+    
+    printf("ocv_ar::Detect - projection flip mode: %d\n", (int)flip);
     
     markerScale = markerSizeM;
     flipProj = flip;
@@ -519,24 +521,30 @@ void Detect::setOutputFrameOnCurProcLevel(FrameProcLevel curLvl, cv::Mat *srcFra
 }
 
 void Detect::drawMarker(cv::Mat &img, const Marker &m) {
+	cv::Scalar white(255, 255, 255, 255);
+	cv::Scalar blue(0, 0, 255, 255);
+    cv::Scalar green(0, 255, 0, 255);
+    
 	// draw outline
 	Point2fVec markerPts = m.getPoints();
 	const int numPts = (int)markerPts.size();
-	cv::Scalar white(255, 255, 255, 255);
 	for (int i = 0; i < numPts; i++) {
 		cv::line(img, markerPts[i], markerPts[(i + 1) % numPts], white);
 	}
     
 	// draw centroid
-	cv::Scalar green(0, 255, 0, 255);
 	cv::Point cross1(2, 2);
 	cv::Point cross2(2, -2);
 	cv::Point c = m.getCentroid();
 	cv::line(img, c - cross1, c + cross1, green);
 	cv::line(img, c + cross2, c - cross2, green);
     
+    // draw id
+    stringstream idStr;
+    idStr << m.getId();
+    cv::putText(img, idStr.str(), c + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 1.0, white);
+    
 	// draw perimeter
-	cv::Scalar blue(0, 0, 255, 255);
 	cv::circle(img, c, m.getPerimeterRadius(), blue);
 }
 
@@ -621,13 +629,12 @@ void Detect::calcProjMat(float viewW, float viewH) {
         + q[i][3];
     }
     
-    if (flipProj)
-    {
-//        projMat[13] = -projMat[13];
-//        projMat[1]  = -projMat[1];
-//        projMat[5]  = -projMat[5];
-//        projMat[9]  = -projMat[9];
-        
+    if (flipProj == FLIP_H) {
+        projMat[1]  = -projMat[1];
+        projMat[5]  = -projMat[5];
+        projMat[9]  = -projMat[9];
+        projMat[13] = -projMat[13];
+    } else if (flipProj == FLIP_V) {
         projMat[0] = -projMat[0];
         projMat[4]  = -projMat[4];
         projMat[8]  = -projMat[8];
