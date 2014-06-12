@@ -66,7 +66,7 @@ private:
     
     void setOutputFrameOnCurProcLevel(FrameProcLevel curLvl, cv::Mat *srcFrame);
     
-    void drawMarker(cv::Mat &img, const Marker &m);
+    void drawMarker(cv::Mat &img, const Marker &m, bool drawId);
     
     void calcProjMat(float viewW, float viewH);
     

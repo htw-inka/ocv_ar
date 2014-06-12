@@ -399,7 +399,7 @@ void Detect::findMarkerCandidates() {
              it != possibleMarkers.end();
              ++it)
 		{
-			drawMarker(*outFrame, *it);
+			drawMarker(*outFrame, *it, false);
 		}
 	}
 }
@@ -452,12 +452,7 @@ void Detect::identifyMarkers() {
                 cv::Mat dstMat = (*outFrame)(roi);
                 normMarkerImg.copyTo(dstMat);
                 
-                drawMarker(*outFrame, *it);
-                
-                //			LOGINFO("pers. mat.:");
-                //			for (int i = 0; i < perspMat.rows; i++) {
-                //				LOGINFO("%f\t%f\t%f", perspMat.at<float>(i, 0), perspMat.at<float>(i, 1), perspMat.at<float>(i, 2));
-                //			}
+                drawMarker(*outFrame, *it, true);
             }
         }
     }
@@ -520,7 +515,7 @@ void Detect::setOutputFrameOnCurProcLevel(FrameProcLevel curLvl, cv::Mat *srcFra
     }
 }
 
-void Detect::drawMarker(cv::Mat &img, const Marker &m) {
+void Detect::drawMarker(cv::Mat &img, const Marker &m, bool drawId) {
 	cv::Scalar white(255, 255, 255, 255);
 	cv::Scalar blue(0, 0, 255, 255);
     cv::Scalar green(0, 255, 0, 255);
@@ -540,9 +535,11 @@ void Detect::drawMarker(cv::Mat &img, const Marker &m) {
 	cv::line(img, c + cross2, c - cross2, green);
     
     // draw id
-    stringstream idStr;
-    idStr << m.getId();
-    cv::putText(img, idStr.str(), c + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 1.0, white);
+    if (drawId) {
+        stringstream idStr;
+        idStr << m.getId();
+        cv::putText(img, idStr.str(), c + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 1.0, white);
+    }
     
 	// draw perimeter
 	cv::circle(img, c, m.getPerimeterRadius(), blue);
