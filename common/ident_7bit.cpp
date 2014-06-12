@@ -128,12 +128,10 @@ int Identificator7BitCode::markerCodeToId(const cv::Mat &m, int dir) const {
 	unsigned char u, v;
 	bool nextRow = true;
 	while (nextRow) {
-        //		cv::Mat row = m.row(r);
-        //		if (dir < 0) {
-        //			cv::flip(row, row, 1);	// flip around because we read it in reverse order
-        //		}
+        // get current row
 		const unsigned char *row =  m.ptr<unsigned char>(r);
         
+        // select u and v bits
 		if (dir > 0) {
 			u = row[1];
 			v = row[3];
@@ -149,8 +147,8 @@ int Identificator7BitCode::markerCodeToId(const cv::Mat &m, int dir) const {
         if (v) id |= 1;
         
         // next row
-		r += dir;
 		nextRow = (dir > 0) ? (r < m.cols) : (r > 0);
+		r += dir;
 	}
     
 	return id;
