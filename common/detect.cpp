@@ -107,7 +107,7 @@ Detect::Detect(IdentificatorType identType, float markerSizeM, FlipMode flip) {
     flipProj = flip;
     prepared = false;
     inputFrameCvtType = -1;
-    outFrameProcLvl = DEFAULT;
+    outFrameProcLvl = PROC_LEVEL_DEFAULT;
     
     memset(projMat, 0, sizeof(float) * 16);
     projMatUsedSize = cv::Size(0, 0);
@@ -141,7 +141,7 @@ void Detect::setIdentificator(IdentificatorType identType) {
     if (ident) delete ident;
     
     switch (identType) {
-        case CODE_7BIT:
+        case IDENT_TYPE_CODE_7BIT:
             ident = new Identificator7BitCode();
             break;
             
@@ -281,7 +281,7 @@ void Detect::processFrame() {
 }
 
 cv::Mat *Detect::getOutputFrame() const {
-    if (outFrameProcLvl == DEFAULT) return NULL;
+    if (outFrameProcLvl == PROC_LEVEL_DEFAULT) return NULL;
 
     return outFrame;
 }
@@ -301,7 +301,7 @@ void Detect::preprocess() {
 #error Either OCV_AR_CONF_DOWNSAMPLE or OCV_AR_CONF_RESIZE_W/H must be defined.
 #endif
     
-    setOutputFrameOnCurProcLevel(PREPROC, inFrame);
+    setOutputFrameOnCurProcLevel(PROC_LEVEL_PREPROC, inFrame);
 }
 
 void Detect::performThreshold() {
@@ -313,7 +313,7 @@ void Detect::performThreshold() {
                           OCV_AR_CONF_THRESH_BLOCK_SIZE,
                           OCV_AR_CONF_THRESH_C);
     
-    setOutputFrameOnCurProcLevel(THRESH, procFrame);
+    setOutputFrameOnCurProcLevel(PROC_LEVEL_THRESH, procFrame);
 }
 
 //void Detect::threshPostProc() {
@@ -338,7 +338,7 @@ void Detect::findContours() {
 	}
     
 	// draw contours if necessary
-	if (outFrameProcLvl == CONTOURS) {
+	if (outFrameProcLvl == PROC_LEVEL_CONTOURS) {
         //		LOGINFO("Num. contours: %d", curContours.size());
 		outFrame->setTo(cv::Scalar(0, 0, 0, 255));	// clear: fill black
 		cv::drawContours(*outFrame, curContours, -1, cv::Scalar(255, 255, 255, 255));
@@ -390,7 +390,7 @@ void Detect::findMarkerCandidates() {
 //    printf("ocv_ar::Detect - Num. marker candidates without duplicates: %lu\n", possibleMarkers.size());
     
 	// draw markers if necessary
-	if (outFrameProcLvl == POSS_MARKERS) {
+	if (outFrameProcLvl == PROC_LEVEL_POSS_MARKERS) {
 		procFrame->copyTo(*outFrame);
         //		outFrame->setTo(cv::Scalar(0, 0, 0, 255));	// clear: fill black
         
@@ -407,7 +407,7 @@ void Detect::findMarkerCandidates() {
 void Detect::identifyMarkers() {
     if (!ident) return;
     
-	if (outFrame && outFrameProcLvl == DETECTED_MARKERS) {
+	if (outFrame && outFrameProcLvl == PROC_LEVEL_DETECTED_MARKERS) {
         //		outFrame->setTo(cv::Scalar(0, 0, 0, 255));	// clear: fill black
 		inFrame->copyTo(*outFrame);
 	}
@@ -443,7 +443,7 @@ void Detect::identifyMarkers() {
                              cv::TermCriteria(CV_TERMCRIT_ITER, OCV_AR_CONF_REFINE_CORNERS_ITER, 0.1f));	// max. iterations, min. epsilon
 #endif
             // draw marker
-            if (outFrame && outFrameProcLvl == DETECTED_MARKERS) {
+            if (outFrame && outFrameProcLvl == PROC_LEVEL_DETECTED_MARKERS) {
                 float r = it->getPerimeterRadius();
                 cv::Point o = it->getCentroid() - (0.5f * cv::Point2f(r, r));
 //                printf("ocv_ar::Detect - drawing marker with id %d at pos %d, %d\n", it->getId(), o.x, o.y);

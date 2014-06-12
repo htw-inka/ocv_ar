@@ -33,7 +33,7 @@ public:
     
     void setIdentificator(IdentificatorType identType);
     
-    IdentificatorType getIdentificator() const { return ident ? ident->getType() : NONE; }
+    IdentificatorType getIdentificator() const { return ident ? ident->getType() : IDENT_TYPE_NONE; }
     
     void processFrame();
     

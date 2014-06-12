@@ -13,19 +13,19 @@ namespace ocv_ar {
     } FlipMode;
     
     typedef enum _FrameProcLevel {
-        DEFAULT = -1,
-        PREPROC,
-        THRESH,
-        CONTOURS,
-        POSS_MARKERS,        // possible marker candidates
-        DETECTED_MARKERS
+        PROC_LEVEL_DEFAULT = -1,
+        PROC_LEVEL_PREPROC,
+        PROC_LEVEL_THRESH,
+        PROC_LEVEL_CONTOURS,
+        PROC_LEVEL_POSS_MARKERS,        // possible marker candidates
+        PROC_LEVEL_DETECTED_MARKERS
     } FrameProcLevel;
     
     typedef enum _IdentificatorType {
-        NONE = -1,
-        CODE_7BIT,
-        CODE_8BIT,
-        TEMPLATE
+        IDENT_TYPE_NONE = -1,
+        IDENT_TYPE_CODE_7BIT
+//        CODE_8BIT,
+//        TEMPLATE
     } IdentificatorType;
     
     typedef std::vector<cv::Point> PointVec;
