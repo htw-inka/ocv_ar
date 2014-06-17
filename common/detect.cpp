@@ -140,9 +140,17 @@ Detect::~Detect() {
 void Detect::setIdentificatorType(IdentificatorType identType) {
     if (ident) delete ident;
     
+    printf("ocv_ar::Detect - loading identificator type %d\n", identType);
+    
     switch (identType) {
         case IDENT_TYPE_CODE_7BIT:
             ident = new Identificator7BitCode();
+            printf("ocv_ar::Detect - identificator is set to '7 bit code'\n");
+            break;
+
+        case IDENT_TYPE_TEMPL_MATCH:
+            ident = new IdentificatorTemplMatch();
+            printf("ocv_ar::Detect - identificator is set to 'template matching'\n");
             break;
             
         default:

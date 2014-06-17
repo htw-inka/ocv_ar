@@ -11,13 +11,7 @@ namespace ocv_ar {
 
 class IdentificatorTemplMatch : public IdentificatorBase {
 public:
-    IdentificatorTemplMatch() : IdentificatorBase(8 * OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD),
-                                borderSize(OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD),
-                                minSetMarkerPixels(OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD * OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD / 2)
-    {
-        templSize = reqMarkerSize - 2 * borderSize;
-        templSizeSq = templSize * templSize;
-    };
+    IdentificatorTemplMatch();
     
     virtual ~IdentificatorTemplMatch();
     

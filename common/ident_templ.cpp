@@ -6,6 +6,15 @@ using namespace ocv_ar;
 
 #pragma mark constructors/deconstructor
 
+IdentificatorTemplMatch::IdentificatorTemplMatch() :
+    IdentificatorBase(IDENT_TYPE_TEMPL_MATCH, 8 * OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD),
+    borderSize(OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD),
+    minSetMarkerPixels(OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD * OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD / 2)
+{
+        templSize = reqMarkerSize - 2 * borderSize;
+        templSizeSq = templSize * templSize;
+}
+
 IdentificatorTemplMatch::~IdentificatorTemplMatch() {
     // clear templates map
     for (TemplateMap::iterator it = templates.begin();
@@ -29,6 +38,8 @@ bool IdentificatorTemplMatch::readMarkerCode(const cv::Mat &area, Marker &marker
                     && checkBorder(area, 1, 7);     // right column
     
     if (!borderOk) return false;
+    
+    printf("ocv_ar::IdentificatorTemplMatch - border checks ok\n");
     
     // get only the "content" of <area>, i.e. the marker without borders
     cv::Rect roi(borderSize, borderSize, area.cols - borderSize, area.rows - borderSize);
@@ -81,6 +92,9 @@ void IdentificatorTemplMatch::addTemplateImg(int id, const cv::Mat &img, bool st
     // add to map
     TemplateMapPair templPair(id, templArr);
     templates.insert(templPair);
+    
+    printf("ocv_ar::IdentificatorTemplMatch - added template image of size %dx%d for id %d\n",
+           img.cols, img.rows, id);
 }
 
 #pragma mark private methods
@@ -100,12 +114,7 @@ bool IdentificatorTemplMatch::checkBorder(const cv::Mat &img, int dir, int off) 
     
     // walk
     for (int c = 0; c < numCells; c++) {
-        if (dir == 0) { // horizontal
-            x++;
-        } else {        // vertical
-            y++;
-        }
-        
+        // get abs. pixel offsets for the cell
         int cellX = x * borderSize;
         int cellY = y * borderSize;
         
@@ -114,7 +123,16 @@ bool IdentificatorTemplMatch::checkBorder(const cv::Mat &img, int dir, int off) 
         
         // count non zero values
         if (cv::countNonZero(cell) > minSetMarkerPixels) {  // we have "white" cell!
+            printf("ocv_ar::IdentificatorTemplMatch - check border failed for dir %d, offset %d\n", dir, off);
+            
             return false;
+        }
+        
+        // increment
+        if (dir == 0) { // horizontal
+            x++;
+        } else {        // vertical
+            y++;
         }
     }
     
@@ -127,9 +145,11 @@ bool IdentificatorTemplMatch::checkTemplateRotations(const cv::Mat &marker, cons
     for (int r = 0; r < 4; r++) {   // check all four rotations
         cv::bitwise_xor(marker, templRotations[r], errorMat);
         
-        float numErrors = cv::countNonZero(errorMat);
+        float errRate = (float)cv::countNonZero(errorMat) / (float)templSizeSq;
         
-        if ((numErrors / (float)templSizeSq) <= OCV_AR_CONF_TEMPL_MATCH_MAX_ERROR_RATE) {
+        printf("ocv_ar::IdentificatorTemplMatch - rotation %d, error rate %f\n", r, errRate);
+        
+        if (errRate <= OCV_AR_CONF_TEMPL_MATCH_MAX_ERROR_RATE) {
             *validRot = r;
             return true;
         }

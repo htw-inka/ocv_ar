@@ -10,7 +10,9 @@ namespace ocv_ar {
 
 class IdentificatorBase {
 public:
-    IdentificatorBase(int markerSize) : reqMarkerSize(markerSize) {};
+    IdentificatorBase(IdentificatorType t, int markerSize) : reqMarkerSize(markerSize),
+                                                             type(t)
+    {};
     
     virtual ~IdentificatorBase() {};
     
@@ -18,13 +20,13 @@ public:
     
     virtual int getRequiredMarkerSize() const { return reqMarkerSize; }
     
-    static IdentificatorType getType() { return type; }
+    IdentificatorType getType() { return type; }
     
 protected:
     void setFoundPropertiesForMarker(Marker &marker, int id, int rot);
     
-    static IdentificatorType type;
     
+    IdentificatorType type;
     int reqMarkerSize;
 };
     

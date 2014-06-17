@@ -11,7 +11,7 @@ namespace ocv_ar {
 
 class Identificator7BitCode : public IdentificatorBase {
 public:
-    Identificator7BitCode() : IdentificatorBase(7 * OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD),
+    Identificator7BitCode() : IdentificatorBase(IDENT_TYPE_CODE_7BIT, 7 * OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD),
                               markerCellSize(OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD),
                               minSetMarkerPixels(OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD * OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD / 2)
                             {};

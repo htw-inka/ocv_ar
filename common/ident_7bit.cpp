@@ -9,8 +9,6 @@ static unsigned char possibleBitcodes[4][5] = {
 	{ 0,1,1,1,0 }
 };
 
-IdentificatorType IdentificatorBase::type = IDENT_TYPE_CODE_7BIT;
-
 bool Identificator7BitCode::readMarkerCode(const cv::Mat &area, Marker &marker) {
     assert(area.rows == area.cols && area.rows == reqMarkerSize && area.type() == CV_8UC1);   // must be quadratic and grayscale
     
