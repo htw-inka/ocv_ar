@@ -14,7 +14,7 @@ public:
     
     virtual ~IdentificatorBase() {};
     
-    virtual bool readMarkerCode(cv::Mat &area, Marker &marker) = 0;
+    virtual bool readMarkerCode(const cv::Mat &area, Marker &marker) = 0;
     
     virtual int getRequiredMarkerSize() const { return reqMarkerSize; }
     

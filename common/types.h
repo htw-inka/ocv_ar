@@ -2,6 +2,7 @@
 #define OCV_AR_TYPES_H
 
 #include <vector>
+#include <map>
 
 #include <opencv2/opencv.hpp>
 
@@ -23,15 +24,18 @@ namespace ocv_ar {
     
     typedef enum _IdentificatorType {
         IDENT_TYPE_NONE = -1,
-        IDENT_TYPE_CODE_7BIT
+        IDENT_TYPE_CODE_7BIT,
+        TEMPLATE
 //        CODE_8BIT,
-//        TEMPLATE
     } IdentificatorType;
     
     typedef std::vector<cv::Point> PointVec;
     typedef std::vector<cv::Point2f> Point2fVec;
     typedef std::vector<cv::Point3f> Point3fVec;
     typedef std::vector<PointVec> ContourVec;
+    
+    typedef std::map<int, cv::Mat> TemplateMap;
+    typedef std::pair<int, cv::Mat> TemplateMapPair;
 }
 
 #endif

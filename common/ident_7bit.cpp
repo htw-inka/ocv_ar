@@ -11,7 +11,7 @@ static unsigned char possibleBitcodes[4][5] = {
 
 IdentificatorType IdentificatorBase::type = IDENT_TYPE_CODE_7BIT;
 
-bool Identificator7BitCode::readMarkerCode(cv::Mat &area, Marker &marker) {
+bool Identificator7BitCode::readMarkerCode(const cv::Mat &area, Marker &marker) {
     // bitMatrix will contain the read marker code raw bits
     cv::Mat bitMatrix = cv::Mat::zeros(5, 5, CV_8UC1);  // 5 because in the 7 bit marker, 1 bit on each side must be 0
     

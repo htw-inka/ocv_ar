@@ -17,7 +17,7 @@ public:
                             {};
     
     
-    virtual bool readMarkerCode(cv::Mat &area, Marker &marker);
+    virtual bool readMarkerCode(const cv::Mat &area, Marker &marker);
     
 protected:
     virtual bool checkMarkerCode(const cv::Mat &m, int dir) const;
