@@ -11,8 +11,9 @@ IdentificatorTemplMatch::IdentificatorTemplMatch() :
     borderSize(OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD),
     minSetMarkerPixels(OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD * OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD / 2)
 {
-        templSize = reqMarkerSize - 2 * borderSize;
-        templSizeSq = templSize * templSize;
+    templSize = reqMarkerSize - 2 * borderSize;
+    templSizeSq = templSize * templSize;
+    printf("ocv_ar::IdentificatorTemplMatch - req. marker size: %d, templ. size: %d\n", reqMarkerSize, templSize);
 }
 
 IdentificatorTemplMatch::~IdentificatorTemplMatch() {
@@ -42,8 +43,11 @@ bool IdentificatorTemplMatch::readMarkerCode(const cv::Mat &area, Marker &marker
     printf("ocv_ar::IdentificatorTemplMatch - border checks ok\n");
     
     // get only the "content" of <area>, i.e. the marker without borders
-    cv::Rect roi(borderSize, borderSize, area.cols - borderSize, area.rows - borderSize);
+    int areaContentSize = area.cols - 2 * borderSize;
+    cv::Rect roi(borderSize, borderSize, areaContentSize, areaContentSize);
     cv::Mat areaContent(area, roi);
+    
+//    printf("ocv_ar::IdentificatorTemplMatch - area content size %dx%d\n", areaContent.cols, areaContent.rows);
     
     // do the template matching for all templates we have
     for (TemplateMap::iterator it = templates.begin();
@@ -69,7 +73,8 @@ void IdentificatorTemplMatch::addTemplateImg(int id, const cv::Mat &img, bool st
     // strip border
     if (stripBorder) {
         assert(img.rows == reqMarkerSize);  // "templ" will then be of size "reqMarkerSize - 2 * borderSize"
-        cv::Rect roi(borderSize, borderSize, img.cols - borderSize, img.rows - borderSize);
+        int imgContentSize = img.cols - 2 * borderSize;
+        cv::Rect roi(borderSize, borderSize, imgContentSize, imgContentSize);
         templ = img(roi);
     } else {
         assert(img.rows == templSize);
