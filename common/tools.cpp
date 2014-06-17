@@ -8,3 +8,8 @@ float Tools::distSquared(cv::Point2f p1, cv::Point2f p2) {
     
 	return dX * dX + dY * dY;
 }
+
+void Tools::matRot90CW(cv::Mat &m) {
+    cv::transpose(m, m);
+    cv::flip(m, m, 1);
+}

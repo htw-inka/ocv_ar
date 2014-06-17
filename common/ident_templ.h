@@ -12,22 +12,28 @@ namespace ocv_ar {
 class IdentificatorTemplMatch : public IdentificatorBase {
 public:
     IdentificatorTemplMatch() : IdentificatorBase(8 * OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD),
-                                borderSize(OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD)
+                                borderSize(OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD),
+                                minSetMarkerPixels(OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD * OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD / 2)
     {
         templSize = reqMarkerSize - 2 * borderSize;
+        templSizeSq = templSize * templSize;
     };
+    
+    virtual ~IdentificatorTemplMatch();
     
     virtual bool readMarkerCode(const cv::Mat &area, Marker &marker);
     
     void addTemplateImg(int id, const cv::Mat &img, bool stripBorder = true, bool binarize = false);
     
-protected:
-    virtual bool checkMarkerCode(const cv::Mat &m, int dir) const;
-    virtual int markerCodeToId(const cv::Mat &m, int dir) const;
-    
 private:
+    bool checkTemplateRotations(const cv::Mat &marker, const cv::Mat *templRotations, int *validRot);
+    bool checkBorder(const cv::Mat &img, int dir, int off);
+    
+    
     int borderSize;
     int templSize;
+    int templSizeSq;
+    int minSetMarkerPixels;
     TemplateMap templates;
 };
 

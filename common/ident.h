@@ -21,9 +21,7 @@ public:
     static IdentificatorType getType() { return type; }
     
 protected:
-    virtual bool checkMarkerCode(const cv::Mat &m, int dir) const = 0;
-    virtual int markerCodeToId(const cv::Mat &m, int dir) const = 0;
-    
+    void setFoundPropertiesForMarker(Marker &marker, int id, int rot);
     
     static IdentificatorType type;
     

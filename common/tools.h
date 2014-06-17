@@ -8,6 +8,7 @@ namespace ocv_ar {
 class Tools {
 public:
     static float distSquared(cv::Point2f p1, cv::Point2f p2);
+    static void matRot90CW(cv::Mat &m); // fast clock-wise rotation of <m> by 90°
 };
     
 }

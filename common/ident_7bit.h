@@ -16,14 +16,13 @@ public:
                               minSetMarkerPixels(OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD * OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD / 2)
                             {};
     
-    
     virtual bool readMarkerCode(const cv::Mat &area, Marker &marker);
     
-protected:
-    virtual bool checkMarkerCode(const cv::Mat &m, int dir) const;
-    virtual int markerCodeToId(const cv::Mat &m, int dir) const;
-    
 private:
+    bool checkMarkerCode(const cv::Mat &m, int dir) const;
+    int markerCodeToId(const cv::Mat &m, int dir) const;
+    
+    
     int markerCellSize;
     int minSetMarkerPixels;
 };

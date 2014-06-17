@@ -34,8 +34,8 @@ namespace ocv_ar {
     typedef std::vector<cv::Point3f> Point3fVec;
     typedef std::vector<PointVec> ContourVec;
     
-    typedef std::map<int, cv::Mat> TemplateMap;
-    typedef std::pair<int, cv::Mat> TemplateMapPair;
+    typedef std::map<int, cv::Mat*> TemplateMap;    // maps id to array of 4 rotated templates
+    typedef std::pair<int, cv::Mat*> TemplateMapPair;
 }
 
 #endif

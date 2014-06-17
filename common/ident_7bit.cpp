@@ -12,6 +12,8 @@ static unsigned char possibleBitcodes[4][5] = {
 IdentificatorType IdentificatorBase::type = IDENT_TYPE_CODE_7BIT;
 
 bool Identificator7BitCode::readMarkerCode(const cv::Mat &area, Marker &marker) {
+    assert(area.rows == area.cols && area.rows == reqMarkerSize && area.type() == CV_8UC1);   // must be quadratic and grayscale
+    
     // bitMatrix will contain the read marker code raw bits
     cv::Mat bitMatrix = cv::Mat::zeros(5, 5, CV_8UC1);  // 5 because in the 7 bit marker, 1 bit on each side must be 0
     
@@ -53,10 +55,10 @@ bool Identificator7BitCode::readMarkerCode(const cv::Mat &area, Marker &marker) 
     	}
         
     	if (checkMarkerCode(*curBitMat, dir)) { // found a valid marker code!
-            // set the Id and rotate the corner points
-    		marker.setId(markerCodeToId(*curBitMat, dir));
-            marker.rotatePoints(rot);
-            
+            // set the id and rotate the corner points
+            int id = markerCodeToId(*curBitMat, dir);
+            setFoundPropertiesForMarker(marker, id, rot);
+
             return true;
     	}
     }
