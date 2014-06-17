@@ -31,9 +31,11 @@ public:
     
     void setInputFrame(cv::Mat *frame);
     
-    void setIdentificator(IdentificatorType identType);
+    void setIdentificatorType(IdentificatorType identType);
     
-    IdentificatorType getIdentificator() const { return ident ? ident->getType() : IDENT_TYPE_NONE; }
+    IdentificatorType getIdentificatorType() const { return ident ? ident->getType() : IDENT_TYPE_NONE; }
+    
+    IdentificatorBase *getIdentificator() const { return ident; }
     
     void processFrame();
     

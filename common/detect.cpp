@@ -121,7 +121,7 @@ Detect::Detect(IdentificatorType identType, float markerSizeM, FlipMode flip) {
     downsampleSizeW = downsampleSizeH = 0;
     
     ident = NULL;
-    setIdentificator(identType);
+    setIdentificatorType(identType);
     
 #if !defined(OCV_AR_CONF_DOWNSAMPLE) && defined(OCV_AR_CONF_RESIZE_W) && defined(OCV_AR_CONF_RESIZE_H)
     downsampleSizeW = OCV_AR_CONF_RESIZE_W;
@@ -137,7 +137,7 @@ Detect::~Detect() {
     if (ident) delete ident;
 }
 
-void Detect::setIdentificator(IdentificatorType identType) {
+void Detect::setIdentificatorType(IdentificatorType identType) {
     if (ident) delete ident;
     
     switch (identType) {
