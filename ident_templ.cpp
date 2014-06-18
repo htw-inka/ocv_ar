@@ -82,6 +82,12 @@ bool IdentificatorTemplMatch::readMarkerCode(const cv::Mat &area, Marker &marker
 void IdentificatorTemplMatch::addTemplateImg(int id, const cv::Mat &img, bool stripBorder, bool binarize) {
     assert(id >= 0 && img.rows == img.cols && img.type() == CV_8UC1);   // must be quadratic and grayscale
     
+    if (templates.find(id) != templates.end()) {
+        printf("ocv_ar::IdentificatorTemplMatch - template not added to library - id %d already exists\n", id);
+        
+        return;
+    }
+    
     cv::Mat templ(templSize, templSize, CV_8UC1);
     
     // strip border
