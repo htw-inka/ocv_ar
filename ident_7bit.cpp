@@ -1,3 +1,18 @@
+/**
+ * ocv_ar - OpenCV based Augmented Reality library
+ *
+ * Marker identification for ArUco style 7x7 markers -- implementation file.
+ *
+ * Author: Markus Konrad <konrad@htw-berlin.de>, June 2014.
+ * INKA Research Group, HTW Berlin - http://inka.htw-berlin.de/
+ *
+ * This file contains code and inspiration from ArUco library developed at the
+ * Ava group of the Univeristy of Cordoba (Spain).
+ * See http://sourceforge.net/projects/aruco/
+ *
+ * See LICENSE for license.
+ */
+
 #include "ident_7bit.h"
 
 using namespace ocv_ar;

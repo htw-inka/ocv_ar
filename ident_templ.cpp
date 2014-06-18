@@ -1,3 +1,15 @@
+/**
+ * ocv_ar - OpenCV based Augmented Reality library
+ *
+ * Marker identification via simple template matching of binary
+ * images -- implementation file.
+ *
+ * Author: Markus Konrad <konrad@htw-berlin.de>, June 2014.
+ * INKA Research Group, HTW Berlin - http://inka.htw-berlin.de/
+ *
+ * See LICENSE for license.
+ */
+
 #include "ident_templ.h"
 
 #include "tools.h"
@@ -11,9 +23,12 @@ IdentificatorTemplMatch::IdentificatorTemplMatch() :
     borderSize(OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD),
     minSetMarkerPixels(OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD * OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD / 2)
 {
+    // calculate defaults
     templSize = reqMarkerSize - 2 * borderSize;
     templSizeSq = templSize * templSize;
-    printf("ocv_ar::IdentificatorTemplMatch - req. marker size: %d, templ. size: %d\n", reqMarkerSize, templSize);
+    
+    printf("ocv_ar::IdentificatorTemplMatch - req. marker size: %d, templ. size: %d\n",
+           reqMarkerSize, templSize);
 }
 
 IdentificatorTemplMatch::~IdentificatorTemplMatch() {
@@ -147,8 +162,10 @@ bool IdentificatorTemplMatch::checkTemplateRotations(const cv::Mat &marker, cons
     cv::Mat errorMat(marker.rows, marker.cols, CV_8UC1);
     
     for (int r = 0; r < 4; r++) {   // check all four rotations
+        // do a bitwise or so that we get "1"s where the two images do not fit
         cv::bitwise_xor(marker, templRotations[r], errorMat);
         
+        // could the pixels that do not fit
         float errRate = (float)cv::countNonZero(errorMat) / (float)templSizeSq;
         
         printf("ocv_ar::IdentificatorTemplMatch - rotation %d, error rate %f\n", r, errRate);

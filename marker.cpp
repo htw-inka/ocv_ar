@@ -1,3 +1,18 @@
+/**
+ * ocv_ar - OpenCV based Augmented Reality library
+ *
+ * Marker class to describe single found markers in an image -- implementation file.
+ *
+ * Author: Markus Konrad <konrad@htw-berlin.de>, June 2014.
+ * INKA Research Group, HTW Berlin - http://inka.htw-berlin.de/
+ *
+ * This file contains code and inspiration from ArUco library developed at the
+ * Ava group of the Univeristy of Cordoba (Spain).
+ * See http://sourceforge.net/projects/aruco/
+ *
+ * See LICENSE for license.
+ */
+
 #include "marker.h"
 
 using namespace ocv_ar;
@@ -5,10 +20,12 @@ using namespace ocv_ar;
 #pragma mark public methods
 
 Marker::Marker(PointVec &pts) {
+    // convert points to cv::Point2f and add to the vector
 	for (int i = 0; i < 4; i++) {
 		points.push_back(cv::Point2f(pts[i].x, pts[i].y));
 	}
     
+    // common init
 	init();
 }
 
@@ -16,6 +33,7 @@ Marker::Marker(PointVec &pts) {
 Marker::Marker(Point2fVec &pts) {
 	points.assign(pts.begin(), pts.begin() + 4);
     
+    // common init
 	init();
 }
 
@@ -77,7 +95,11 @@ void Marker::sortPoints() {
 }
 
 void Marker::calcShapeProperties() {
+    // centroid is the mean of all points
 	centroid = 0.25f * (points[0] + points[1] + points[2] + points[3]);
+    
+    // perimeter radius is the maximum distance between the centroid
+    // and a corner point
 	float maxDist = numeric_limits<float>::min();
 	for (Point2fVec::iterator it = points.begin();
 		 it != points.end();
@@ -93,6 +115,7 @@ void Marker::calcShapeProperties() {
 #pragma mark private methods
 
 void Marker::init() {
+    // set defaults
     id = -1;
     
 	rVec.create(3, 1, CV_32F);

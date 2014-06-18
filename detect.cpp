@@ -1,3 +1,18 @@
+/**
+ * ocv_ar - OpenCV based Augmented Reality library
+ *
+ * Detection core implementation file.
+ *
+ * Author: Markus Konrad <konrad@htw-berlin.de>, June 2014.
+ * INKA Research Group, HTW Berlin - http://inka.htw-berlin.de/
+ *
+ * This file contains code and inspiration from ArUco library developed at the
+ * Ava group of the Univeristy of Cordoba (Spain).
+ * See http://sourceforge.net/projects/aruco/
+ *
+ * See LICENSE for license.
+ */
+
 #include "detect.h"
 
 #include "tools.h"
@@ -8,10 +23,12 @@ using namespace ocv_ar;
 #pragma mark public methods
 
 Detect::Detect(IdentificatorType identType, float markerSizeM, FlipMode flip) {
+    // use marker size default
     if (markerSizeM <= 0.0f) markerSizeM = OCV_AR_CONF_DEFAULT_MARKER_SIZE_REAL;
     
     printf("ocv_ar::Detect - projection flip mode: %d\n", (int)flip);
     
+    // set defaults
     markerScale = markerSizeM;
     flipProj = flip;
     prepared = false;
@@ -30,6 +47,8 @@ Detect::Detect(IdentificatorType identType, float markerSizeM, FlipMode flip) {
     downsampleSizeW = downsampleSizeH = 0;
     
     ident = NULL;
+    
+    // set identificator
     setIdentificatorType(identType);
     
 #if !defined(OCV_AR_CONF_DOWNSAMPLE) && defined(OCV_AR_CONF_RESIZE_W) && defined(OCV_AR_CONF_RESIZE_H)
@@ -39,6 +58,8 @@ Detect::Detect(IdentificatorType identType, float markerSizeM, FlipMode flip) {
 }
 
 Detect::~Detect() {
+    // delete allocated memory
+    
     if (inFrameOrigGray) delete inFrameOrigGray;
     if (inFrame) delete inFrame;
     if (procFrame) delete procFrame;
@@ -51,6 +72,7 @@ void Detect::setIdentificatorType(IdentificatorType identType) {
     
     printf("ocv_ar::Detect - loading identificator type %d\n", identType);
     
+    // create an identificator object
     switch (identType) {
         case IDENT_TYPE_CODE_7BIT:
             ident = new Identificator7BitCode();
@@ -67,6 +89,7 @@ void Detect::setIdentificatorType(IdentificatorType identType) {
             break;
     }
     
+    // set normalized marker coordinates for 2D and 3D space
     normMarkerCoord2D.clear();
     normMarkerCoord3D.clear();
     
@@ -150,6 +173,7 @@ void Detect::setCamIntrinsics(const cv::Mat &cam, const cv::Mat &dist) {
 float *Detect::getProjMat(float viewW, float viewH) {
     assert(!camMat.empty() && viewW > 0.0f && viewH > 0.0f && prepared);
     
+    // re-calculate the projection matrix if necessary
     if (viewW != projMatUsedSize.width || viewH != projMatUsedSize.height) {
         calcProjMat(viewW, viewH);
     }
@@ -175,6 +199,7 @@ void Detect::setFrameOutputLevel(FrameProcLevel level) {
         delete outFrame;
     }
     
+    // allocate memory for the output frame
     outFrame = new cv::Mat(outH, outW, CV_8UC1);
     
     printf("ocv_ar::Detect - set output frame level: %d (output frame size %dx%d)", level, outW, outH);
@@ -189,6 +214,8 @@ void Detect::setInputFrame(cv::Mat *frame) {
 }
 
 void Detect::processFrame() {
+    // defines the whole marker detection pipeline:
+    
     preprocess();
     performThreshold();
     findContours();
@@ -206,6 +233,8 @@ cv::Mat *Detect::getOutputFrame() const {
 #pragma mark private methods
 
 void Detect::preprocess() {
+    // downscale the image
+    
 #ifdef OCV_AR_CONF_DOWNSAMPLE
     for (int i = 0; i < OCV_AR_CONF_DOWNSAMPLE; i++) {
         cv::pyrDown(*inFrameOrigGray, *inFrame);
@@ -222,6 +251,8 @@ void Detect::preprocess() {
 }
 
 void Detect::performThreshold() {
+    // perform thresholding
+    
 	cv::adaptiveThreshold(*inFrame,
                           *procFrame,
                           255,
@@ -249,6 +280,7 @@ void Detect::findContours() {
          it != allContours.end();
          ++it)
 	{
+        // add this contour to our <curContour> vector in case it could form a marker
 		if (it->size() >= OCV_AR_CONF_MIN_CONTOUR_PTS) {
 			curContours.push_back(*it);
 		}
@@ -265,10 +297,12 @@ void Detect::findContours() {
 void Detect::findMarkerCandidates() {
     const float minContourLengthAllowed = OCV_AR_CONF_MIN_CONTOUR_LENGTH * OCV_AR_CONF_MIN_CONTOUR_LENGTH;
     
+    // tabula rasa for the new frame
     foundMarkers.clear();
 	possibleMarkers.clear();
 	PointVec  approxCurve;
     
+    // analyze each contour
 	for (ContourVec::const_iterator it = curContours.begin();
          it != curContours.end();
          ++it)
@@ -302,6 +336,8 @@ void Detect::findMarkerCandidates() {
 
 //    printf("ocv_ar::Detect - Num. marker candidates: %lu\n", possibleMarkers.size());
     
+    // duplicate markers are possible, especially when double edges are detected
+    // filter them out
     discardDuplicateMarkers(possibleMarkers);
     
 //    printf("ocv_ar::Detect - Num. marker candidates without duplicates: %lu\n", possibleMarkers.size());
@@ -376,16 +412,23 @@ void Detect::identifyMarkers() {
 }
 
 void Detect::estimatePositions() {
-    for (vector<Marker *>::iterator it = foundMarkers.begin(); it != foundMarkers.end(); ++it) {
+    // estimate the 3D pose of each found marker
+    for (vector<Marker *>::iterator it = foundMarkers.begin();
+         it != foundMarkers.end();
+         ++it)
+    {
         Marker *marker = *it;
         
-		cv::Mat rVec;
-		cv::Mat tVec;
+        // find marker pose from 3D-2D point correspondences between <normMarkerCoord3D>
+        // and 2D points in <marker->getPoints()>
+		cv::Mat rVec;   // pose rotation vector
+		cv::Mat tVec;   // pose translation vector
 		cv::solvePnP(normMarkerCoord3D, marker->getPoints(),
 					 camMat, distCoeff,
 					 rVec, tVec,
 					 false);
         
+        // generate an OpenGL model-view matrix from the rotation and translation vectors
         marker->updatePoseMat(rVec, tVec);
     }
 }
@@ -554,6 +597,6 @@ void Detect::calcProjMat(float viewW, float viewH) {
         projMat[8]  = -projMat[8];
         projMat[12]  = -projMat[12];
     }
-    
 
+    /* END modified code from ArUco lib */
 }
