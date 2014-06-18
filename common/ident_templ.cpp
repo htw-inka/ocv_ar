@@ -47,7 +47,6 @@ bool IdentificatorTemplMatch::readMarkerCode(const cv::Mat &area, Marker &marker
     cv::Rect roi(borderSize, borderSize, areaContentSize, areaContentSize);
     cv::Mat areaContent(area, roi);
     
-//    printf("ocv_ar::IdentificatorTemplMatch - area content size %dx%d\n", areaContent.cols, areaContent.rows);
     
     // do the template matching for all templates we have
     for (TemplateMap::iterator it = templates.begin();
