@@ -1,3 +1,14 @@
+/**
+ * ocv_ar - OpenCV based Augmented Reality library
+ *
+ * Detection core header file.
+ *
+ * Author: Markus Konrad <konrad@htw-berlin.de>, June 2014.
+ * INKA Research Group, HTW Berlin - http://inka.htw-berlin.de/
+ *
+ * See LICENSE for license.
+ */
+
 #ifndef OCV_AR_DETECT_H
 #define OCV_AR_DETECT_H
 
@@ -17,98 +28,195 @@ using namespace std;
 
 namespace ocv_ar {
 
-    
-    
+/**
+ * Marker detection class. Handles initialization of the detection pipeline and then
+ * allows to perform the marker detection steps for each input frame that is given.
+ * The found *possible* markers will be tried to identify according to a identificator
+ * type. Results will be saved in a <foundMarkers> vector. Also calculates the pose for each
+ * found valid marker.
+ */
 class Detect {
 public:
+    /**
+     * Initialize a marker detector with identificator type <identType>, a real world
+     * marker size in meters <markerSizeM> and a flip mode for the marker pose
+     * estimation <flip>.
+     *
+     * Note:
+    *  - You need to call <prepare()> before you can start processing frames!
+     * - You need to call <setCamIntrinsics()> before each marker's pose can be estimated.
+     */
     Detect(IdentificatorType identType, float markerSizeM = 0.0f, FlipMode flip = FLIP_NONE);
+    
+    /**
+     * Deconstructor.
+     */
     ~Detect();
     
+    /**
+     * Prepare for input frames of size <frameW> x <frameH> with <frameChan>
+     * color channels. Specify a conversion type <cvtType> for grayscale conversion of
+     * the input frames. If <cvtType> is -1, the conversion type will be guessed.
+     */
     void prepare(int frameW, int frameH, int frameChan, int cvtType = -1);
     
-    void setCamIntrinsics(const cv::Mat &camMat, const cv::Mat &distCoeff);
-    
-    void setFrameOutputLevel(FrameProcLevel level);
-    
-    void setInputFrame(cv::Mat *frame);
-    
-    void setIdentificatorType(IdentificatorType identType);
-    
-    IdentificatorType getIdentificatorType() const { return ident ? ident->getType() : IDENT_TYPE_NONE; }
-    
-    IdentificatorBase *getIdentificator() const { return ident; }
-    
-    void processFrame();
-    
-    cv::Mat *getOutputFrame() const;
-    
-    vector<Marker *> getMarkers() const { return foundMarkers; }
-    
-    float *getProjMat(float viewW, float viewH);
-    
-    float getMarkerScale() const { return markerScale; }
-    
+    /**
+     * Return the preparation state of the detector.
+     */
     bool isPrepared() const { return prepared; }
     
-private:
-    void preprocess();
+    /**
+     * Set the camera intrinsics for pose estimation by submitting the camera matrix
+     * <camMat> and (optionally empty) distortion coefficients <distCoeff>.
+     */
+    void setCamIntrinsics(const cv::Mat &camMat, const cv::Mat &distCoeff);
     
+    /**
+     * Set a frame output level to display the results of each single step in the
+     * detection pipeline for debugging purposes. See <types.h> for possible levels.
+     */
+    void setFrameOutputLevel(FrameProcLevel level);
+    
+    /**
+     * Set an identificator type. See <types.h> for possible identificators.
+     */
+    void setIdentificatorType(IdentificatorType identType);
+    
+    /**
+     * Get the current identificator type. See <types.h> for possible identificators.
+     */
+    IdentificatorType getIdentificatorType() const { return ident ? ident->getType() : IDENT_TYPE_NONE; }
+    
+    /**
+     * Get the current identificator object.
+     */
+    IdentificatorBase *getIdentificator() const { return ident; }
+    
+    /**
+     * Set an input frame for processing.
+     * Note: You need to call <prepare()> before you can start processing frames!
+     */
+    void setInputFrame(cv::Mat *frame);
+    
+    /**
+     * Process the input frame to detect and identify markers.
+     */
+    void processFrame();
+    
+    /**
+     * Get the output frame according to the "frame output level" set via
+     * <setFrameOutputLevel()>. If this level is set to PROC_LEVEL_DEFAULT, it will
+     * return NULL, otherwise it will return a weak pointer.
+     */
+    cv::Mat *getOutputFrame() const;
+    
+    /**
+     * Return a vector with weak pointers to the found markers.
+     */
+    vector<Marker *> getMarkers() const { return foundMarkers; }
+    
+    /**
+     * Return a 4x4 OpenGL projection matrix that can be used to display the found
+     * markers. The projection matrix will be calculated depending on the OpenGL view
+     * size <viewW> x <viewH>.
+     * A pointer to a float[16] array will be returned.
+     */
+    float *getProjMat(float viewW, float viewH);
+    
+    /**
+     * Return the set real world marker size in meters.
+     */
+    float getMarkerScale() const { return markerScale; }
+    
+private:
+    /**
+     * Detection step 1 - frame preprocessing: Downscaling, color conversion.
+     */
+    void preprocess();
+
+    /**
+     * Detection step 2 - thresholding.
+     */
     void performThreshold();
     
 //    void threshPostProc();
     
+    /**
+     * Detection step 3 - finding contours.
+     */
     void findContours();
     
+    /**
+     * Detection step 4 - finding marker candidates from contours.
+     */
     void findMarkerCandidates();
     
+    /**
+     * Detection step 5 - identifiying markers.
+     */
     void identifyMarkers();
     
-    void discardDuplicateMarkers(vector<Marker> &markerList);
-    
+    /**
+     * Detection step 5 - estimating the 3D pose of each found valid marker.
+     */
     void estimatePositions();
     
+    /**
+     * Discard duplicate markers after detection step 4.
+     */
+    void discardDuplicateMarkers(vector<Marker> &markerList);
+    
+    /**
+     * Helper function to copy the image from <srcFrame> to <outFrame> if the
+     * frame processing level <curLvl> matches.
+     */
     void setOutputFrameOnCurProcLevel(FrameProcLevel curLvl, cv::Mat *srcFrame);
     
+    /**
+     * Helper function to draw a marker <m> to the image <img>. Optionally draw the
+     * marker id (<drawId>).
+     */
     void drawMarker(cv::Mat &img, const Marker &m, bool drawId);
     
     void calcProjMat(float viewW, float viewH);
     
     
-    bool prepared;
     
-    int inputFrameCvtType;
+    bool prepared;                  // detector is prepared (<prepare()> called)?
     
-    FrameProcLevel outFrameProcLvl;
+    int inputFrameCvtType;          // color conversion type for input frames
+    
+    FrameProcLevel outFrameProcLvl; // frame output processing level
 
     cv::Mat *inFrameOrigGray;   // input frame with original size, grayscale
     cv::Mat *inFrame;           // input frame downsampled, grayscale
     cv::Mat *procFrame;         // temporary frame during processing, grayscale/binary
     cv::Mat *outFrame;          // output frame for debugging, grayscale
     
-    ContourVec curContours;
+    ContourVec curContours;     // vector with extracted contours
     
-    int inputFrameW;
-    int inputFrameH;
-    int downsampleSizeW;
-    int downsampleSizeH;
+    int inputFrameW;            // original input frame width
+    int inputFrameH;            // original input frame height
+    int downsampleSizeW;        // frame width after preprocessing
+    int downsampleSizeH;        // frame height after preprocessing
     
-    vector<Marker> possibleMarkers;
-    vector<Marker *> foundMarkers;   // holds pointers to correct markers in <possibleMarkers>
+    vector<Marker> possibleMarkers; // possible markers in the current frame (i.e. all squares found in the image)
+    vector<Marker *> foundMarkers;  // holds pointers to all valid markers in <possibleMarkers>
     
-    IdentificatorBase *ident;
+    IdentificatorBase *ident;   // marker identificator object
     
     int normMarkerSize;
 	Point2fVec normMarkerCoord2D;	// standard coordinates for a normalized rectangular marker in 2D
 	Point3fVec normMarkerCoord3D;	// standard coordinates for a normalized rectangular marker in 3D
     
-    cv::Mat camMat;
-    cv::Mat distCoeff;
+    cv::Mat camMat;             // cam intrinsics: camera matrix
+    cv::Mat distCoeff;          // cam intrinsics: distortion coefficients (may be empty)
     
-    float markerScale;
+    float markerScale;          // real world marker size in meters
     
-    FlipMode flipProj;
-    float projMat[16];
-    cv::Size projMatUsedSize;
+    FlipMode flipProj;          // flip mode for the projection matrix
+    float projMat[16];          // 4x4 OpenGL projection matrix
+    cv::Size projMatUsedSize;   // the view size for which <projMat> was calculated
 };
 
 }
