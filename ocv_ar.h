@@ -3,8 +3,8 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "common/conf.h"
-#include "common/types.h"
-#include "common/detect.h"
+#include "conf.h"
+#include "types.h"
+#include "detect.h"
 
 #endif
