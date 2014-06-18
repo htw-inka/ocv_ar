@@ -116,6 +116,18 @@ void IdentificatorTemplMatch::addTemplateImg(int id, const cv::Mat &img, bool st
            img.cols, img.rows, id);
 }
 
+void IdentificatorTemplMatch::removeTemplateImg(int id) {
+    TemplateMap::iterator it = templates.find(id);
+    if (it != templates.end()) {
+        // free memory
+        cv::Mat *templArr = it->second;
+        delete [] templArr;
+        
+        // remove the map entry
+        templates.erase(it);
+    }
+}
+
 #pragma mark private methods
 
 bool IdentificatorTemplMatch::checkBorder(const cv::Mat &img, int dir, int off) {
@@ -161,6 +173,9 @@ bool IdentificatorTemplMatch::checkBorder(const cv::Mat &img, int dir, int off) 
 bool IdentificatorTemplMatch::checkTemplateRotations(const cv::Mat &marker, const cv::Mat *templRotations, int *validRot) {
     cv::Mat errorMat(marker.rows, marker.cols, CV_8UC1);
     
+    float bestResult = OCV_AR_CONF_TEMPL_MATCH_MAX_ERROR_RATE;    // init. with worst possible result
+    int bestResultRot = -1;
+    
     for (int r = 0; r < 4; r++) {   // check all four rotations
         // do a bitwise or so that we get "1"s where the two images do not fit
         cv::bitwise_xor(marker, templRotations[r], errorMat);
@@ -168,13 +183,23 @@ bool IdentificatorTemplMatch::checkTemplateRotations(const cv::Mat &marker, cons
         // could the pixels that do not fit
         float errRate = (float)cv::countNonZero(errorMat) / (float)templSizeSq;
         
-        printf("ocv_ar::IdentificatorTemplMatch - rotation %d, error rate %f\n", r, errRate);
-        
-        if (errRate <= OCV_AR_CONF_TEMPL_MATCH_MAX_ERROR_RATE) {
-            *validRot = r;
-            return true;
+        if (errRate <= OCV_AR_CONF_TEMPL_MATCH_MAX_ERROR_RATE && errRate < bestResult) {
+            // found the best result so far
+            bestResult = errRate;
+            bestResultRot = r;
         }
     }
     
-    return false;
+    if (bestResultRot < 0) {
+        printf("ocv_ar::IdentificatorTemplMatch - no template match\n");
+        
+        return false;
+    }
+    
+
+    printf("ocv_ar::IdentificatorTemplMatch - template match(es) with best result %f, rotation %d\n",
+           bestResult, bestResultRot);
+    *validRot = bestResultRot;
+    
+    return true;
 }

@@ -57,6 +57,11 @@ public:
      */
     void addTemplateImg(int id, const cv::Mat &img, bool stripBorder = true, bool binarize = false);
     
+    /**
+     * Remove template image associated with ID <id> from the template library.
+     */
+    void removeTemplateImg(int id);
+    
 private:
     /**
      * Helper function to match the image <marker> against the templates with 4 possible rotations
