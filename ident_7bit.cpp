@@ -55,6 +55,7 @@ bool Identificator7BitCode::readMarkerCode(const cv::Mat &area, Marker &marker) 
     // create transposed bit matrix for rotations
     cv::Mat bitMatrixT;
     cv::transpose(bitMatrix, bitMatrixT);
+    cv::flip(bitMatrixT, bitMatrixT, 1);
     
     cv::Mat *curBitMat; // a pointer to either bitMatrix or bitMatrixT
     
@@ -83,8 +84,12 @@ bool Identificator7BitCode::checkMarkerCode(const cv::Mat &m, int dir) const {
 	// set start index depending on reading direction
 	int start = (dir > 0) ? 0 : m.cols - 1;
     
+    printf("ocv_ar::Identificator7BitCode - checking marker code in dir %d, start index = %d\n", dir, start);
+    
 	// go through all bitcode rows in the read matrix
 	for (int r = 0; r < m.rows; r++) {
+        printf("ocv_ar::Identificator7BitCode -> checking matrix row %d\n", r);
+        
 		// select read code row
 		const unsigned char *readCode = m.ptr<unsigned char>(r);
         
@@ -93,6 +98,8 @@ bool Identificator7BitCode::checkMarkerCode(const cv::Mat &m, int dir) const {
 		// go through all possible bitcodes
         const int numPossibleCodes = sizeof(possibleBitcodes) / sizeof(possibleBitcodes[0]);
 		for (int p = 0; p < numPossibleCodes; p++) {
+            printf("ocv_ar::Identificator7BitCode ->> checking possible bitcode %d\n", p);
+            
 			// select possible code row
 			const unsigned char *testCode = possibleBitcodes[p];
             
@@ -102,31 +109,38 @@ bool Identificator7BitCode::checkMarkerCode(const cv::Mat &m, int dir) const {
 			int i = start;
 			int j = 0;
 			while (nextBit) {
+                printf("ocv_ar::Identificator7BitCode ->>> checking bit with i = %d, j = %d\n", i, j);
+                
 				if (readCode[i] != testCode[j]) {	// invalid bit found!
+                    printf("ocv_ar::Identificator7BitCode ->>> found invalid bit\n");
 					invalidBit = true;
 					break;
 				}
                 
-				i += dir;
 				if (dir > 0) {
-					j = i;
 					nextBit = (i < m.cols);
 				} else {
-					j = start - i;
 					nextBit = (i > 0);
 				}
+                
+                i += dir;
+                j++;
 			}
             
 			if (!invalidBit) {	// this bitcode row is valid!
+                printf("ocv_ar::Identificator7BitCode ->> matrix row is valid, equals bitcode #%d\n", (j - 1));
 				foundCode = true;	// so check the next row
 				break;
 			}
 		}
         
 		if (!foundCode) {
+            printf("ocv_ar::Identificator7BitCode -> this row is not valid, aborting...\n");
 			return false;
 		}
 	}
+    
+    printf("ocv_ar::Identificator7BitCode - this marker code is valid\n");
     
 	return true;
 
