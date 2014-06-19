@@ -51,15 +51,15 @@ public:
 private:
     /**
      * Helper function to check if a marker code is valid when the extracted marker code
-     * matrix <m> is read in direction <dir>.
+     * matrix <m> is read.
      */
-    bool checkMarkerCode(const cv::Mat &m, int dir) const;
+    bool checkMarkerCode(const cv::Mat &m) const;
     
     /**
      * Helper function to read the marker code from the extracted marker code
-     * matrix <m> by using direction <dir>.
+     * matrix <m>.
      */
-    int markerCodeToId(const cv::Mat &m, int dir) const;
+    int markerCodeToId(const cv::Mat &m) const;
     
     
     int markerCellSize;     // cell size of each marker field in pixels
