@@ -31,15 +31,15 @@ namespace ocv_ar {
  * A possible marker square can be analyzed and - if it is a valid marker - its ID
  * can be calculated from the code embedded in the inner 5x5 binary marker fields.
  */
-class Identificator7BitCode : public IdentificatorBase {
+class Identificator7x7 : public IdentificatorBase {
 public:
     /**
      * Constructor. Create a new idenficiator of type IDENT_TYPE_CODE_7BIT.
      */
-    Identificator7BitCode() : IdentificatorBase(IDENT_TYPE_CODE_7BIT, 7 * OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD),
-                              markerCellSize(OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD),
-                              minSetMarkerPixels(OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD * OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD / 2)
-                            {};
+    Identificator7x7() : IdentificatorBase(IDENT_TYPE_CODE_7X7, 7 * OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD),
+                         markerCellSize(OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD),
+                         minSetMarkerPixels(OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD * OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD / 2)
+                         {};
     
     /**
      * Try to read the marker code from the quadratic image part <area> by trying out all

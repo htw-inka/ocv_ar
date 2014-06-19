@@ -74,8 +74,8 @@ void Detect::setIdentificatorType(IdentificatorType identType) {
     
     // create an identificator object
     switch (identType) {
-        case IDENT_TYPE_CODE_7BIT:
-            ident = new Identificator7BitCode();
+        case IDENT_TYPE_CODE_7X7:
+            ident = new Identificator7x7();
             printf("ocv_ar::Detect - identificator is set to '7 bit code'\n");
             break;
 

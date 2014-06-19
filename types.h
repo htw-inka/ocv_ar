@@ -44,7 +44,7 @@ namespace ocv_ar {
      */
     typedef enum _IdentificatorType {
         IDENT_TYPE_NONE = -1,
-        IDENT_TYPE_CODE_7BIT,
+        IDENT_TYPE_CODE_7X7,
         IDENT_TYPE_TEMPL_MATCH
 //        CODE_8BIT,
     } IdentificatorType;

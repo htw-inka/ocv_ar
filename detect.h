@@ -25,7 +25,7 @@
 #include "types.h"
 #include "marker.h"
 #include "ident.h"
-#include "ident_7bit.h"
+#include "ident_7x7.h"
 #include "ident_templ.h"
 
 using namespace std;

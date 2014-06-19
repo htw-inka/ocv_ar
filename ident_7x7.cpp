@@ -13,7 +13,7 @@
  * See LICENSE for license.
  */
 
-#include "ident_7bit.h"
+#include "ident_7x7.h"
 
 #include "tools.h"
 
@@ -26,7 +26,7 @@ static unsigned char possibleBitcodes[4][5] = {
 	{ 0,1,1,1,0 }
 };
 
-bool Identificator7BitCode::readMarkerCode(const cv::Mat &area, Marker &marker) {
+bool Identificator7x7::readMarkerCode(const cv::Mat &area, Marker &marker) {
     assert(area.rows == area.cols && area.rows == reqMarkerSize && area.type() == CV_8UC1);   // must be quadratic and grayscale
     
     // bitMatrix will contain the read marker code raw bits
@@ -70,7 +70,7 @@ bool Identificator7BitCode::readMarkerCode(const cv::Mat &area, Marker &marker) 
     return false;
 }
 
-bool Identificator7BitCode::checkMarkerCode(const cv::Mat &m) const {
+bool Identificator7x7::checkMarkerCode(const cv::Mat &m) const {
 	// go through all bitcode rows in the read matrix
 	for (int r = 0; r < m.rows; r++) {
 		// select read code row
@@ -109,7 +109,7 @@ bool Identificator7BitCode::checkMarkerCode(const cv::Mat &m) const {
 
 }
 
-int Identificator7BitCode::markerCodeToId(const cv::Mat &m) const {
+int Identificator7x7::markerCodeToId(const cv::Mat &m) const {
 	int id = 0;
     
 	// go through all bitcode rows in the read matrix
