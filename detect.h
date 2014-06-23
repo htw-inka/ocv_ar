@@ -100,9 +100,10 @@ public:
     
     /**
      * Set an input frame for processing.
+     * <frame> is a weak ref
      * Note: You need to call <prepare()> before you can start processing frames!
      */
-    void setInputFrame(cv::Mat *frame);
+    void setInputFrame(const cv::Mat *frame);
     
     /**
      * Process the input frame to detect and identify markers.

@@ -61,7 +61,6 @@ Detect::~Detect() {
     // delete allocated memory
     
     if (inFrameOrigGray) delete inFrameOrigGray;
-    if (inFrame) delete inFrame;
     if (procFrame) delete procFrame;
     if (outFrame) delete outFrame;
     if (ident) delete ident;
@@ -205,7 +204,7 @@ void Detect::setFrameOutputLevel(FrameProcLevel level) {
     printf("ocv_ar::Detect - set output frame level: %d (output frame size %dx%d)", level, outW, outH);
 }
 
-void Detect::setInputFrame(cv::Mat *frame) {
+void Detect::setInputFrame(const cv::Mat *frame) {
     assert(prepared && frame);
     
     if (inputFrameCvtType >= 0) {   // convert to grayscale
@@ -399,9 +398,20 @@ void Detect::identifyMarkers() {
             if (outFrame && outFrameProcLvl == PROC_LEVEL_DETECTED_MARKERS) {
                 float r = it->getPerimeterRadius();
                 cv::Point o = it->getCentroid() - (0.5f * cv::Point2f(r, r));
-//                printf("ocv_ar::Detect - drawing marker with id %d at pos %d, %d\n", it->getId(), o.x, o.y);
                 cv::Rect roi(o, normMarkerImg.size());
                 cv::rectangle(*outFrame, roi, cv::Scalar(255,255,255,255));
+                
+                if (roi.x + roi.width > outFrame->cols) {
+                    roi.width = roi.x + roi.width - outFrame->cols;
+                }
+                
+                if (roi.y + roi.height > outFrame->rows) {
+                    roi.height = roi.y + roi.height - outFrame->rows;
+                }
+                
+//                printf("ocv_ar::Detect - drawing marker with id %d at pos %d, %d with ROI at %d, %d (%d x %d)\n",
+//                       it->getId(), o.x, o.y, roi.x, roi.y, roi.width, roi.height);
+                
                 cv::Mat dstMat = (*outFrame)(roi);
                 normMarkerImg.copyTo(dstMat);
                 
