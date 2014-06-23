@@ -133,7 +133,7 @@ void Detect::prepare(int frameW, int frameH, int frameChan, int cvtType) {
     }
     
 #ifdef OCV_AR_CONF_DOWNSAMPLE
-    int frac = pow(2, OCV_AR_CONF_DOWNSAMPLE);
+    int frac = pow(2.0f, (float)OCV_AR_CONF_DOWNSAMPLE);
     downsampleSizeW = frameW / frac;
     downsampleSizeH = frameH / frac;
 #elif defined(OCV_AR_CONF_RESIZE_W) && defined(OCV_AR_CONF_RESIZE_H)

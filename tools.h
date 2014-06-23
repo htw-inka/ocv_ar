@@ -16,7 +16,11 @@
 #ifndef OCV_AR_TOOLS_H
 #define OCV_AR_TOOLS_H
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
+
+#include "types.h"
 
 namespace ocv_ar {
 

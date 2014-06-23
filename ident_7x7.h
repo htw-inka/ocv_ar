@@ -18,14 +18,17 @@
 #ifndef OCV_AR_IDENT_7BIT_H
 #define OCV_AR_IDENT_7BIT_H
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
 
-#include "marker.h"
-#include "types.h"
+#include "conf.h"
 #include "ident.h"
+#include "types.h"
+#include "marker.h"
 
 namespace ocv_ar {
-
+    
 /**
  * Marker idenfication for ArUco style 7x7 markers.
  * A possible marker square can be analyzed and - if it is a valid marker - its ID

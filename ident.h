@@ -12,10 +12,12 @@
 #ifndef OCV_AR_IDENT_H
 #define OCV_AR_IDENT_H
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
 
-#include "marker.h"
 #include "types.h"
+#include "marker.h"
 
 namespace ocv_ar {
 
@@ -29,8 +31,8 @@ public:
      * Base constructor to set the identificator type <t> and the required marker size
      * <markerSize> in pixels.
      */
-    IdentificatorBase(IdentificatorType t, int markerSize) : reqMarkerSize(markerSize),
-                                                             type(t)
+    IdentificatorBase(IdentificatorType t, int markerSize) : type(t),
+                                                             reqMarkerSize(markerSize)
     {};
     
     /**

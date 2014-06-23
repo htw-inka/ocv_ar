@@ -1,0 +1,8 @@
+# exclude object files
+*.o
+
+#vim noise:
+*.swp
+
+#osx noise:
+.DS_Store

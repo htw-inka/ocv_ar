@@ -13,11 +13,14 @@
 #ifndef OCV_AR_IDENT_TEMPL_H
 #define OCV_AR_IDENT_TEMPL_H
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
 
-#include "marker.h"
-#include "types.h"
+#include "conf.h"
 #include "ident.h"
+#include "types.h"
+#include "marker.h"
 
 namespace ocv_ar {
 
