@@ -38,6 +38,7 @@ Detect::Detect(IdentificatorType identType, float markerSizeM, FlipMode flip) {
     memset(projMat, 0, sizeof(float) * 16);
     projMatUsedSize = cv::Size(0, 0);
     
+    inFrameRef = NULL;
     inFrameOrigGray = NULL;
     inFrame = NULL;
     procFrame= NULL;
@@ -205,13 +206,19 @@ void Detect::setFrameOutputLevel(FrameProcLevel level) {
     printf("ocv_ar::Detect - set output frame level: %d (output frame size %dx%d)", level, outW, outH);
 }
 
-void Detect::setInputFrame(const cv::Mat *frame) {
+void Detect::setInputFrame(const cv::Mat *frame, bool doNotCopyGrayscaleImg) {
     assert(prepared && frame);
     
     if (inputFrameCvtType >= 0) {   // convert to grayscale (will copy the frame!)
         cv::cvtColor(*frame, *inFrameOrigGray, inputFrameCvtType);
     } else {
-        frame->copyTo(*inFrameOrigGray);    // just copy the frame
+        if (doNotCopyGrayscaleImg) {
+            inFrameRef = frame;                 // only assign the frame pointer
+            inFrameOrigGray = NULL;
+        } else {
+            frame->copyTo(*inFrameOrigGray);    // copy the frame
+            inFrameRef = NULL;
+        }
     }
 }
 
@@ -238,12 +245,17 @@ void Detect::preprocess() {
     // downscale the image
     
 #ifdef OCV_AR_CONF_DOWNSAMPLE
-    for (int i = 0; i < OCV_AR_CONF_DOWNSAMPLE; i++) {
-        cv::pyrDown(*inFrameOrigGray, *inFrame);
-        
-        inFrameOrigGray = inFrame;
+    if (inFrameRef) {
+        cv::pyrDown(*inFrameRef, *inFrame);
+    } else {
+        for (int i = 0; i < OCV_AR_CONF_DOWNSAMPLE; i++) {
+            cv::pyrDown(*inFrameOrigGray, *inFrame);
+            
+            inFrameOrigGray = inFrame;
+        }
     }
 #elif defined(OCV_AR_CONF_RESIZE_W) && defined(OCV_AR_CONF_RESIZE_H)
+    cv::Mat *framePtr = inFrameRef ? inFrameRef : inFrameOrigGray;
     cv::resize(*inFrameOrigGray, *inFrame, cv::Size(OCV_AR_CONF_RESIZE_W, OCV_AR_CONF_RESIZE_H));
 #else
 #error Either OCV_AR_CONF_DOWNSAMPLE or OCV_AR_CONF_RESIZE_W/H must be defined.

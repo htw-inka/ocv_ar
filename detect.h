@@ -100,10 +100,14 @@ public:
     
     /**
      * Set an input frame for processing.
-     * <frame> is a weak ref
+     * <frame> is a weak ref and will be copied internally if it is a color image
+     * and/or if <doNotCopyGrayscaleImg> is false.
+     * Otherwise, <frame> will be handled as reference but will not be modified
+     * (it is const).
+     *
      * Note: You need to call <prepare()> before you can start processing frames!
      */
-    void setInputFrame(const cv::Mat *frame);
+    void setInputFrame(const cv::Mat *frame, bool doNotCopyGrayscaleImg = false);
     
     /**
      * Process the input frame to detect and identify markers.
@@ -195,6 +199,7 @@ private:
     
     FrameProcLevel outFrameProcLvl; // frame output processing level
 
+    const cv::Mat *inFrameRef;
     cv::Mat *inFrameOrigGray;   // input frame with original size, grayscale
     cv::Mat *inFrame;           // input frame downsampled, grayscale
     cv::Mat *procFrame;         // temporary frame during processing, grayscale/binary
