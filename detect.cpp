@@ -162,6 +162,7 @@ void Detect::prepare(int frameW, int frameH, int frameChan, int cvtType) {
     
     printf("ocv_ar::Detect - prepared for frames: %dx%d (%d channels)\n", frameW, frameH, frameChan);
     printf("ocv_ar::Detect - will downscale to: %dx%d\n", downsampleSizeW, downsampleSizeH);
+    printf("ocv_ar::Detect - will use convert mode: %d\n", inputFrameCvtType);
 }
 
 void Detect::setCamIntrinsics(const cv::Mat &cam, const cv::Mat &dist) {
@@ -207,8 +208,10 @@ void Detect::setFrameOutputLevel(FrameProcLevel level) {
 void Detect::setInputFrame(const cv::Mat *frame) {
     assert(prepared && frame);
     
-    if (inputFrameCvtType >= 0) {   // convert to grayscale
+    if (inputFrameCvtType >= 0) {   // convert to grayscale (will copy the frame!)
         cv::cvtColor(*frame, *inFrameOrigGray, inputFrameCvtType);
+    } else {
+        frame->copyTo(*inFrameOrigGray);    // just copy the frame
     }
 }
 
