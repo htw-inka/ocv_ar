@@ -21,13 +21,14 @@
 //#define OCV_AR_CONF_RESIZE_H 360
 
 /** thresholding **/
-/* see http://docs.opencv.org/modules/imgproc/doc/miscellaneous_transformations.html#threshold */
+/* see http://docs.opencv.org/modules/imgproc/doc/miscellaneous_transformations.html#adaptivethreshold */
 
-#define OCV_AR_CONF_THRESH_BLOCK_SIZE   5
+#define OCV_AR_CONF_THRESH_BLOCK_SIZE   7
 #define OCV_AR_CONF_THRESH_C            9.0f
 
 /** detection **/
 
+#define OCV_AR_CONF_FIND_CONTOUR_TYPE   CV_RETR_EXTERNAL    // is faster but can cause problems with low contrast images; try CV_RETR_LIST then
 #define OCV_AR_CONF_MIN_CONTOUR_PTS     4       // 4 because we need to find squares
 #define OCV_AR_CONF_MIN_CONTOUR_LENGTH  30.0f   // in pixels
 #define OCV_AR_CONF_MAX_DUPLICATE_DIST  2.0f    // in pixels

@@ -285,8 +285,12 @@ void Detect::performThreshold() {
 void Detect::findContours() {
 	// find contours
 	ContourVec allContours;
-	cv::findContours(*procFrame, allContours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE); // CV_RETR_LIST or CV_RETR_EXTERNAL
+	cv::findContours(*procFrame, allContours,
+                     OCV_AR_CONF_FIND_CONTOUR_TYPE,
+                     CV_CHAIN_APPROX_SIMPLE);   // CV_CHAIN_APPROX_NONE or CV_CHAIN_APPROX_SIMPLE
 
+//    printf("ocv_ar::Detect - num contours: %lu\n", allContours.size());
+    
 	// filter out contours consisting of
 	// less than <minContourPointsAllowed> points
 	curContours.clear();
@@ -326,7 +330,7 @@ void Detect::findMarkerCandidates() {
 		float eps = contour.size() * 0.05f;
 		cv::approxPolyDP(contour, approxCurve, eps, true);
         
-		// We interested only in polygons that contains only four points
+		// we are only interested in convex polygons that contain exactly four points
 		if (approxCurve.size() != 4 || !cv::isContourConvex(approxCurve)) continue;
 
 		// Ensure that the distance between consecutive points is large enough
