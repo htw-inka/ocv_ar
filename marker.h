@@ -47,6 +47,11 @@ public:
     Marker(Point2fVec &pts);
     
     /**
+     * Copy constructor
+     */
+    Marker(const Marker &other);
+    
+    /**
      * Set the marker ID to <newId>.
      */
     void setId(int newId) { id = newId; };
@@ -60,6 +65,11 @@ public:
      * Return the corner points of this marker.
      */
     Point2fVec getPoints() const { return points; }
+    
+    /**
+     * Set the points in <pVec>.
+     */
+    void setPoints(const Point2fVec &pVec) { points.assign(pVec.begin(), pVec.end()); }
     
     /**
      * Add a point <p> to the corner points.
@@ -100,6 +110,8 @@ public:
      * Update the 3D pose by rotation vector <r> and translation vector <t>.
      */
     void updatePoseMat(const cv::Mat &r, const cv::Mat &t);
+    
+//    void updateFromOtherMarker(const Marker *otherMrk);
     
     /**
      * Return the 4x4 OpenGL 3D pose model-view matrix as pointer to

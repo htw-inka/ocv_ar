@@ -37,6 +37,14 @@ Marker::Marker(Point2fVec &pts) {
 	init();
 }
 
+Marker::Marker(const Marker &other) {
+    setPoints(other.getPoints());
+    init();
+    
+    id = other.getId();
+    updatePoseMat(other.getRVec(), other.getTVec());
+}
+
 void Marker::rotatePoints(int rot) {
 	rotate(points.begin(), points.begin() + 4 - rot, points.end());
 }

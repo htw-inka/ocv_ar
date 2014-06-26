@@ -19,5 +19,6 @@
 #include "conf.h"
 #include "types.h"
 #include "detect.h"
+#include "track.h"
 
 #endif
