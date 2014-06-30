@@ -14,6 +14,7 @@
  */
 
 #include <cmath>
+#include <ctime>
 
 #include "tools.h"
 
@@ -53,6 +54,10 @@ float Tools::getAverageAngle(float *angles, int count) {
     
     // this will just be used when x = 0
     return (y > 0) ? (M_PI / 2.0f) : -(M_PI / 2.0f);
+}
+
+double Tools::nowMs() {
+    return ((double)clock() / CLOCKS_PER_SEC) * 1000.0;
 }
 
 

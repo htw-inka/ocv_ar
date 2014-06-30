@@ -11,6 +11,8 @@
 
 #include "track.h"
 
+#include "tools.h"
+
 using namespace ocv_ar;
 
 void Track::detect(const cv::Mat *frame) {
@@ -35,6 +37,7 @@ void Track::update() {
     
     // update already existing markers
     lockMarkers();
+    double now = Tools::nowMs();
     for (MarkerMap::iterator it = markers.begin();
          it != markers.end();
          )
@@ -56,7 +59,10 @@ void Track::update() {
                 // update the existing marker with the information of the "new" marker
                 existingMrk->updatePoseMat(newMrk->getRVec(), newMrk->getTVec(), true);
                 
-                // delete this marker from the vector
+                // update detection time to "now"
+                existingMrk->updateDetectionTime();
+                
+                // delete this marker from the "new markers" vector
                 newMrkIt = newMarkers.erase(newMrkIt);
                 
                 // set status
@@ -67,8 +73,9 @@ void Track::update() {
             }
         }
         
-        if (!markerUpdated) {   // we could not find this marker in the "new markes" vector ...
-            // ... remove it!
+        // check if this marker was detected this time and if not, if it already time out
+        if (!markerUpdated && now - existingMrk->getDetectionTimeMs() > OCV_AR_CONF_TRACKER_MARKER_TIMEOUT_MS) {
+            // if so, remove it!
             printf("ocv_ar::Track - lost marker %d\n", existingMrkId);
             markers.erase(it++);    // safe map item delete
         } else {

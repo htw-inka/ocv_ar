@@ -45,6 +45,11 @@ public:
      */
     static float getAverageAngle(float *angles, int count);
     
+    /**
+     * Get current timestamp in milliseconds
+     */
+    static double nowMs();
+    
 /* BEGIN code from ArUco lib */
     static float norm( float a, float b, float c );
     static float dot( float a1, float a2, float a3,

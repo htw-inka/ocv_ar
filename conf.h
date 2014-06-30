@@ -49,4 +49,8 @@
 #define OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD    8       // length in pixels that defines a single marker cell
 #define OCV_AR_CONF_TEMPL_MATCH_MAX_ERROR_RATE  0.3f    // max. error rate for template matching
 
+/** tracking **/
+
+#define OCV_AR_CONF_TRACKER_MARKER_TIMEOUT_MS   750.0
+
 #endif

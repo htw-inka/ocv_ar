@@ -59,12 +59,22 @@ public:
     /**
      * Set the marker ID to <newId>.
      */
-    void setId(int newId) { id = newId; };
+    void setId(int newId) { id = newId; }
     
     /**
      * Return the marker ID.
      */
-    int getId() const { return id; };
+    int getId() const { return id; }
+    
+    /**
+     * Updates <detectMs> to "now".
+     */
+    void updateDetectionTime();
+    
+    /**
+     * Return the timestamp for the last detection time in milliseconds.
+     */
+    double getDetectionTimeMs() const { return detectMs; }
     
     /**
      * Return the corner points of this marker.
@@ -156,6 +166,8 @@ private:
     
     
     int id;                 // marker ID
+    
+    double detectMs;         // timestamp of last detection in milliseconds
     
     Point2fVec points;      // corner points
     

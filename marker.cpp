@@ -53,6 +53,10 @@ Marker::~Marker() {
     if (tVecHist) delete [] tVecHist;
 }
 
+void Marker::updateDetectionTime() {
+    detectMs = Tools::nowMs();
+}
+
 void Marker::rotatePoints(int rot) {
 	rotate(points.begin(), points.begin() + 4 - rot, points.end());
 }
@@ -155,6 +159,7 @@ void Marker::init() {
     
 	sortPoints();
 	calcShapeProperties();
+    updateDetectionTime();  // set to now
 }
 
 void Marker::pushVecsToHistory(const float *r, const float *t) {
