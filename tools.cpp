@@ -56,6 +56,28 @@ float Tools::getAverageAngle(float *angles, int count) {
     return (y > 0) ? (M_PI / 2.0f) : -(M_PI / 2.0f);
 }
 
+//void Tools::composeModelViewMatrix(float* camPos, float* camRot, float* matrixColumns) {
+//    matrixColumns[0] =  cos(camRot[2]) * cos(camRot[1]) - sin(camRot[2]) * sin(camRot[0]) * sin(camRot[1]);
+//    matrixColumns[1] =  sin(camRot[2]) * cos(camRot[1]) + cos(camRot[2]) * sin(camRot[0]) * sin(camRot[1]);
+//    matrixColumns[2] = -cos(camRot[0]) * sin(camRot[1]);
+//    matrixColumns[3] = 0;
+//    
+//    matrixColumns[4] = -sin(camRot[2]) * cos(camRot[0]);
+//    matrixColumns[5] =  cos(camRot[2]) * cos(camRot[0]);
+//    matrixColumns[6] =  sin(camRot[0]);
+//    matrixColumns[7] =  0;
+//    
+//    matrixColumns[8] =  cos(camRot[2]) * sin(camRot[1]) + sin(camRot[2]) * sin(camRot[0]) * cos(camRot[1]);
+//    matrixColumns[9] =  sin(camRot[2]) * sin(camRot[1]) - cos(camRot[2]) * sin(camRot[0]) * cos(camRot[1]);
+//    matrixColumns[10] = cos(camRot[0]) * cos(camRot[1]);
+//    matrixColumns[11] = 0;
+//    
+//    matrixColumns[12] = -(camPos[0] * matrixColumns[0] + camPos[1] * matrixColumns[4] + camPos[2] * matrixColumns[8]),
+//    matrixColumns[13] = -(camPos[0] * matrixColumns[1] + camPos[1] * matrixColumns[5] + camPos[2] * matrixColumns[9]),
+//    matrixColumns[14] = -(camPos[0] * matrixColumns[2] + camPos[1] * matrixColumns[6] + camPos[2] * matrixColumns[10]),
+//    matrixColumns[15] = 1;
+//}
+
 double Tools::nowMs() {
     return ((double)clock() / CLOCKS_PER_SEC) * 1000.0;
 }

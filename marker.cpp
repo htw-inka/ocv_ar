@@ -69,15 +69,22 @@ void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing
 	r.convertTo(rVec, CV_32F);
 	t.convertTo(tVec, CV_32F);
     
+    float *rVecPtr = rVec.ptr<float>(0);
+    float *tVecPtr = tVec.ptr<float>(0);
+    
     if (useSmoothing) {
-        float *rVecPtr = rVec.ptr<float>(0);
-        float *tVecPtr = tVec.ptr<float>(0);
         pushVecsToHistory(rVecPtr, tVecPtr);
         
         if (pushedHistVecs >= OCV_AR_CONF_SMOOTHING_HIST_SIZE) {
             calcSmoothPoseVecs(rVecPtr, tVecPtr);
         }
     }
+    
+//    Tools::composeModelViewMatrix(tVecPtr, rVecPtr, poseMat);
+//    
+////    cv::Mat cvPoseMat(4, 4, CV_32FC1, poseMat);
+////    cvPoseMat = cvPoseMat.inv();
+////    memcpy(poseMat, cvPoseMat.data, 16 * sizeof(float));
     
     // create rotation matrix
 	cv::Mat rotMat(3, 3, CV_32FC1);

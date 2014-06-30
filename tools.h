@@ -45,6 +45,11 @@ public:
      */
     static float getAverageAngle(float *angles, int count);
     
+//    /**
+//     * calculate a ModelView Matrix from camera rotation and position (vectors)
+//     */
+//    static void composeModelViewMatrix(float* camPos, float* camRot, float* matrixColumns);
+    
     /**
      * Get current timestamp in milliseconds
      */
