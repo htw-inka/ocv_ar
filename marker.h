@@ -177,6 +177,8 @@ private:
     cv::Mat rVec;           // 3D pose rotation vector
     cv::Mat tVec;           // 3D pose translation vector
     
+    int pushedHistVecs;     // number of vectors in <tVecHist> and <rVecHist>
+    
     float *tVecHist;        // marker position history with N * 3 elements for smoothing effect
     float *rVecHist;        // marker rotation history with N * 3 elements for smoothing effect
     

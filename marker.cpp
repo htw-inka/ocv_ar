@@ -73,7 +73,10 @@ void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing
         float *rVecPtr = rVec.ptr<float>(0);
         float *tVecPtr = tVec.ptr<float>(0);
         pushVecsToHistory(rVecPtr, tVecPtr);
-        calcSmoothPoseVecs(rVecPtr, tVecPtr);
+        
+        if (pushedHistVecs >= OCV_AR_CONF_SMOOTHING_HIST_SIZE) {
+            calcSmoothPoseVecs(rVecPtr, tVecPtr);
+        }
     }
     
     // create rotation matrix
@@ -143,6 +146,7 @@ void Marker::calcShapeProperties() {
 void Marker::init() {
     // set defaults
     id = -1;
+    pushedHistVecs = 0;
     
 	rVec.zeros(3, 1, CV_32F);
 	tVec.zeros(3, 1, CV_32F);
@@ -179,6 +183,10 @@ void Marker::pushVecsToHistory(const float *r, const float *t) {
     rVecHist[numHistElems - 3] = r[0];
     rVecHist[numHistElems - 2] = r[1];
     rVecHist[numHistElems - 1] = r[2];
+    
+    if (pushedHistVecs < OCV_AR_CONF_SMOOTHING_HIST_SIZE) {
+        pushedHistVecs++;
+    }
 }
 
 void Marker::calcSmoothPoseVecs(float *r, float *t) {
