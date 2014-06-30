@@ -42,6 +42,8 @@
 #define OCV_AR_CONF_PROJMAT_NEAR_PLANE  0.01f   // opengl projection matrix near plane
 #define OCV_AR_CONF_PROJMAT_FAR_PLANE   100.0f  // opengl projection matrix far plane
 
+#define OCV_AR_CONF_SMOOTHING_HIST_SIZE 5
+
 /** marker identification **/
 
 #define OCV_AR_CONF_MARKER_CODE_PX_PER_FIELD    8       // length in pixels that defines a single marker cell

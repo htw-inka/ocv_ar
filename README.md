@@ -10,6 +10,10 @@ It supports ArUco-style 7x7 code markers and custom (binary) markers via templat
 
 The project is still at an early stage and further documentation and usage examples will be added soon.
 
+## Acknoledgements and Contributions
+
+Thanks to Alexander Godoba for the 3D pose smoothing functions.
+
 ## TODO
 
 * smoothing

@@ -3,7 +3,7 @@
  *
  * Marker class to describe single found markers in an image -- header file.
  *
- * Author: Markus Konrad <konrad@htw-berlin.de>, June 2014.
+ * Authors: Markus Konrad <konrad@htw-berlin.de>, Alexander Godoba, June 2014.
  * INKA Research Group, HTW Berlin - http://inka.htw-berlin.de/
  *
  * This file contains code and inspiration from ArUco library developed at the
@@ -50,6 +50,11 @@ public:
      * Copy constructor
      */
     Marker(const Marker &other);
+    
+    /**
+     * Deconstructor.
+     */
+    ~Marker();
     
     /**
      * Set the marker ID to <newId>.
@@ -109,7 +114,7 @@ public:
     /**
      * Update the 3D pose by rotation vector <r> and translation vector <t>.
      */
-    void updatePoseMat(const cv::Mat &r, const cv::Mat &t);
+    void updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing = false);
     
 //    void updateFromOtherMarker(const Marker *otherMrk);
     
@@ -136,6 +141,19 @@ private:
      */
     void init();
     
+    /**
+     * Update vector history arrays for smoothing (<tVecHist> and <rVecHist>) with
+     * elements from <r> and <t> (3-component vectors each).
+     */
+    void pushVecsToHistory(const float *r, const float *t);
+    
+    /**
+     * Updates <r> and <t> with new values calulated by taking into account the former
+     * pose vector values in <rVecHist> and <tVecHist>. <r> and <t> are 3-component
+     * vectors each.
+     */
+    void calcSmoothPoseVecs(float *r, float *t);
+    
     
     int id;                 // marker ID
     
@@ -146,6 +164,9 @@ private:
     
     cv::Mat rVec;           // 3D pose rotation vector
     cv::Mat tVec;           // 3D pose translation vector
+    
+    float *tVecHist;        // marker position history with N * 3 elements for smoothing effect
+    float *rVecHist;        // marker rotation history with N * 3 elements for smoothing effect
     
     float poseMat[16];      // OpenGL 4x4 matrix with model-view-transformation
 };

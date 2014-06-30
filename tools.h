@@ -3,7 +3,7 @@
  *
  * Helper function class "Tools" -- header file.
  *
- * Author: Markus Konrad <konrad@htw-berlin.de>, June 2014.
+ * Authors: Markus Konrad <konrad@htw-berlin.de>, Alexander Godoba, June 2014.
  * INKA Research Group, HTW Berlin - http://inka.htw-berlin.de/
  *
  * This file contains code and inspiration from ArUco library developed at the
@@ -38,6 +38,12 @@ public:
      * Fast clock-wise rotation of <m> by 90°
      */
     static void matRot90CW(cv::Mat &m);
+    
+    /**
+     * Get the avarage angle of an array of angles <angles> with
+     * size <count>.
+     */
+    static float getAverageAngle(float *angles, int count);
     
 /* BEGIN code from ArUco lib */
     static float norm( float a, float b, float c );

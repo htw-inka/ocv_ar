@@ -3,7 +3,7 @@
  *
  * Helper function class "Tools" -- implementation file.
  *
- * Author: Markus Konrad <konrad@htw-berlin.de>, June 2014.
+ * Authors: Markus Konrad <konrad@htw-berlin.de>, Alexander Godoba, June 2014.
  * INKA Research Group, HTW Berlin - http://inka.htw-berlin.de/
  *
  * This file contains code and inspiration from ArUco library developed at the
@@ -12,6 +12,8 @@
  *
  * See LICENSE for license.
  */
+
+#include <cmath>
 
 #include "tools.h"
 
@@ -28,6 +30,31 @@ void Tools::matRot90CW(cv::Mat &m) {
     cv::transpose(m, m);
     cv::flip(m, m, 1);
 }
+
+float Tools::getAverageAngle(float *angles, int count) {
+    double x = 0;
+    double y = 0;
+    
+    // sum all values
+    for (int i = 0; i < count; i++) {
+        x += cos(angles[i]);
+        y += sin(angles[i]);
+    }
+    
+    // devide by the amount of values
+    x /= count;
+    y /= count;
+    
+    if (x > 0) {
+        return atan(y / x);
+    } else if (x < 0) {
+        return M_PI + atan(y / x);
+    }
+    
+    // this will just be used when x = 0
+    return (y > 0) ? (M_PI / 2.0f) : -(M_PI / 2.0f);
+}
+
 
 /* BEGIN code from ArUco lib */
 

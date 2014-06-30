@@ -3,7 +3,7 @@
  *
  * Marker class to describe single found markers in an image -- implementation file.
  *
- * Author: Markus Konrad <konrad@htw-berlin.de>, June 2014.
+ * Authors: Markus Konrad <konrad@htw-berlin.de>, Alexander Godoba, June 2014.
  * INKA Research Group, HTW Berlin - http://inka.htw-berlin.de/
  *
  * This file contains code and inspiration from ArUco library developed at the
@@ -14,6 +14,9 @@
  */
 
 #include "marker.h"
+
+#include "conf.h"
+#include "tools.h"
 
 using namespace ocv_ar;
 
@@ -45,20 +48,31 @@ Marker::Marker(const Marker &other) {
     updatePoseMat(other.getRVec(), other.getTVec());
 }
 
+Marker::~Marker() {
+    if (rVecHist) delete [] rVecHist;
+    if (tVecHist) delete [] tVecHist;
+}
+
 void Marker::rotatePoints(int rot) {
 	rotate(points.begin(), points.begin() + 4 - rot, points.end());
 }
 
-void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t) {
-	cv::Mat cvPoseMat;
-	cvPoseMat.create(4, 4, CV_32F);
-	cvPoseMat.eye(4, 4, CV_32F);
+void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing) {
+    if (!r.data || !t.data) return;
     
 	// r and t are double vectors from solvePnP
-	// convert them!
+	// convert them to floats!
 	r.convertTo(rVec, CV_32F);
 	t.convertTo(tVec, CV_32F);
     
+    if (useSmoothing) {
+        float *rVecPtr = rVec.ptr<float>(0);
+        float *tVecPtr = tVec.ptr<float>(0);
+        pushVecsToHistory(rVecPtr, tVecPtr);
+        calcSmoothPoseVecs(rVecPtr, tVecPtr);
+    }
+    
+    // create rotation matrix
 	cv::Mat rotMat(3, 3, CV_32FC1);
 	cv::Rodrigues(rVec, rotMat);
     
@@ -126,9 +140,62 @@ void Marker::init() {
     // set defaults
     id = -1;
     
-	rVec.create(3, 1, CV_32F);
-	tVec.create(3, 1, CV_32F);
+	rVec.zeros(3, 1, CV_32F);
+	tVec.zeros(3, 1, CV_32F);
+    
+    // create vectory history arrays
+    const int numHistElems = OCV_AR_CONF_SMOOTHING_HIST_SIZE * 3;
+    tVecHist = new float[numHistElems];
+    rVecHist = new float[numHistElems];
+    
+    // initialize them with zeros
+    const size_t bytesHistElems = sizeof(float) * numHistElems;
+    memset(tVecHist, 0, bytesHistElems);
+    memset(rVecHist, 0, bytesHistElems);
     
 	sortPoints();
 	calcShapeProperties();
+}
+
+void Marker::pushVecsToHistory(const float *r, const float *t) {
+    const int numHistElems = OCV_AR_CONF_SMOOTHING_HIST_SIZE * 3;
+    
+    // delete the oldest elements and move up the newer ones
+    for (int i = 3; i < numHistElems; i++) {
+        tVecHist[i - 3] = tVecHist[i];
+        rVecHist[i - 3] = rVecHist[i];
+    }
+    
+    // add the new elements to the last position
+    tVecHist[numHistElems - 3] = t[0];
+    tVecHist[numHistElems - 2] = t[1];
+    tVecHist[numHistElems - 1] = t[2];
+    
+    rVecHist[numHistElems - 3] = r[0];
+    rVecHist[numHistElems - 2] = r[1];
+    rVecHist[numHistElems - 1] = r[2];
+}
+
+void Marker::calcSmoothPoseVecs(float *r, float *t) {
+    // calculate the avarage rotation angle for all axes (n)
+    for (int n = 0; n < 3; n++) {
+        float buff[OCV_AR_CONF_SMOOTHING_HIST_SIZE];
+        for (int i = 0; i < OCV_AR_CONF_SMOOTHING_HIST_SIZE; i++) {
+            buff[i] = rVecHist[i * 3 + n];
+        }
+        r[n] = Tools::getAverageAngle(buff, OCV_AR_CONF_SMOOTHING_HIST_SIZE);
+    }
+    
+    // calculate the translation vector by forming the average of the former values
+    t[0] = t[1] = t[2] = 0;    // reset to zeros
+
+    for (int i = 0; i < OCV_AR_CONF_SMOOTHING_HIST_SIZE; i++) {
+        t[0] += tVecHist[i * 3    ];
+        t[1] += tVecHist[i * 3 + 1];
+        t[2] += tVecHist[i * 3 + 2];
+    }
+    
+    t[0] /= OCV_AR_CONF_SMOOTHING_HIST_SIZE;
+    t[1] /= OCV_AR_CONF_SMOOTHING_HIST_SIZE;
+    t[2] /= OCV_AR_CONF_SMOOTHING_HIST_SIZE;
 }

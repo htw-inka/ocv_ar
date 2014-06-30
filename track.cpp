@@ -54,7 +54,7 @@ void Track::update() {
 //                printf("ocv_ar::Track - updating marker %d\n", existingMrkId);
                 
                 // update the existing marker with the information of the "new" marker
-                existingMrk->updatePoseMat(newMrk->getRVec(), newMrk->getTVec());
+                existingMrk->updatePoseMat(newMrk->getRVec(), newMrk->getTVec(), true);
                 
                 // delete this marker from the vector
                 newMrkIt = newMarkers.erase(newMrkIt);
