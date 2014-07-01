@@ -73,30 +73,43 @@ void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing
     float *rVecPtr = rVec.ptr<float>(0);
     float *tVecPtr = tVec.ptr<float>(0);
     
-//    float curRotQuat[4];
-//    Tools::rotVecToQuat(rVecPtr, curRotQuat);
-//    
+//    printf("ocv_ar::Marker %d - rvec1: %f, %f, %f\n", id, rVecPtr[0], rVecPtr[1], rVecPtr[2]);
+    
+//    float rEuler[3];
+//    Tools::rotVecToEuler(rVecPtr, rEuler);
+//    printf("ocv_ar::Marker %d - euler: %f, %f, %f\n", id, rEuler[0], rEuler[1], rEuler[2]);
+//    Tools::eulerToRotVec(rEuler, rVecPtr);
+//    printf("ocv_ar::Marker %d - rvec2: %f, %f, %f\n", id, rVecPtr[0], rVecPtr[1], rVecPtr[2]);
+    
+    float curRotQuat[4];
+    Tools::rotVecToQuat(rVecPtr, curRotQuat);
+
 //    if (prevRotQuat[3] != 0.0f) {
-//        
-//        
+        float intermRotQuat[4];
+        Tools::slerp(prevRotQuat, curRotQuat, 0.5f, intermRotQuat);
+        Tools::quatToRotVec(intermRotQuat, rVecPtr);
+//        printf("ocv_ar::Marker %d - quat1: %f, %f, %f, %f\n", id, curRotQuat[0], curRotQuat[1], curRotQuat[2], curRotQuat[3]);
+//        printf("ocv_ar::Marker %d - quat2: %f, %f, %f, %f\n", id, intermRotQuat[0], intermRotQuat[1], intermRotQuat[2], intermRotQuat[3]);
+        memcpy(prevRotQuat, intermRotQuat, sizeof(float) * 4);
 //        printf("quat dot: %f\n", Tools::quatDot(curRotQuat, prevRotQuat));
+//    } else {
+//        memcpy(prevRotQuat, curRotQuat, sizeof(float) * 4);
 //    }
     
-    if (useSmoothing) {
-        pushVecsToHistory(rVecPtr, tVecPtr);
-        
-        if (pushedHistVecs >= OCV_AR_CONF_SMOOTHING_HIST_SIZE) {
-            calcSmoothPoseVecs(rVecPtr, tVecPtr);
-        }
-    }
+//    if (useSmoothing) {
+//        pushVecsToHistory(rVecPtr, tVecPtr);
+//        
+//        if (pushedHistVecs >= OCV_AR_CONF_SMOOTHING_HIST_SIZE) {
+//            calcSmoothPoseVecs(rVecPtr, tVecPtr);
+//        }
+//    }
     
 //    Tools::composeModelViewMatrix(tVecPtr, rVecPtr, poseMat);
 
 ////    cv::Mat cvPoseMat(4, 4, CV_32FC1, poseMat);
 ////    cvPoseMat = cvPoseMat.inv();
 ////    memcpy(poseMat, cvPoseMat.data, 16 * sizeof(float));
-    
-    printf("ocv_ar::Marker %d - rvec: %f, %f, %f\n", id, rVecPtr[0], rVecPtr[1], rVecPtr[2]);
+
     
     // create rotation matrix
 	cv::Mat rotMat(3, 3, CV_32FC1);
@@ -130,8 +143,6 @@ void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing
     
 //    Tools::printFloatMat(poseMat, 4, 4);
     /* END modified code from ArUco lib */
-    
-//    memcpy(prevRotQuat, curRotQuat, sizeof(float) * 4);
 }
 
 void Marker::sortPoints() {
@@ -174,7 +185,7 @@ void Marker::init() {
 	rVec.zeros(3, 1, CV_32F);
 	tVec.zeros(3, 1, CV_32F);
     
-//    memset(prevRotQuat, 0, sizeof(float) * 4);
+    memset(prevRotQuat, 0, sizeof(float) * 4);
     
     // create vectory history arrays
     tVecHist = new float[OCV_AR_CONF_SMOOTHING_HIST_SIZE * 3];

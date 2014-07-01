@@ -50,6 +50,11 @@ public:
     
     static float quatDot(const float q1[4], const float q2[4]);
     
+    static void rotVecToEuler(const float r[3], float eu[3]);
+    static void eulerToRotVec(const float eu[3], float r[3]);
+    
+    static void slerp(const float qa[4], const float qb[4], float t, float qc[4]);
+    
 //    /**
 //     *
 //     */

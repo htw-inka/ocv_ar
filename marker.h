@@ -181,7 +181,7 @@ private:
     int pushedHistVecs;     // number of vectors in <tVecHist> and <rVecHist>
     
     float *tVecHist;                // marker position history with N * 3 elements for smoothing effect
-//    float prevRotQuat[4];      // previous rotation quaternion
+    float prevRotQuat[4];      // previous rotation quaternion
 //    std::list<cv::Mat> rVecHist;   // marker rotation history
     float *rVecHist;        // marker rotation history with N * 4 elements (quaternions) for smoothing effect
     

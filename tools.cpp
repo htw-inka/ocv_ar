@@ -98,6 +98,120 @@ float Tools::quatDot(const float q1[4], const float q2[4]) {
          + q1[3] * q2[3];
 }
 
+void Tools::slerp(const float qa[4], const float qb[4], float t, float qc[4]) {
+    float cosHalfTheta = quatDot(qa, qb);
+    
+    // if qa=qb or qa=-qb then theta = 0 and we can return qa
+    if (abs(cosHalfTheta) >= 1.0){
+        qc[0] = qa[0];
+        qc[1] = qa[1];
+        qc[2] = qa[2];
+        qc[3] = qa[3];
+        
+        return;
+    }
+    
+    // Calculate temporary values.
+    float halfTheta = acosf(cosHalfTheta);
+    float sinHalfTheta = sqrtf(1.0f - cosHalfTheta * cosHalfTheta);
+    
+    // if theta = 180 degrees then result is not fully defined
+    // we could rotate around any axis normal to qa or qb
+    if (fabs(sinHalfTheta) < 0.001f){ // fabs is floating point absolute
+        qc[0] = qa[0] * 0.5f + qb[0] * 0.5f;
+        qc[1] = qa[1] * 0.5f + qb[1] * 0.5f;
+        qc[2] = qa[2] * 0.5f + qb[2] * 0.5f;
+        qc[3] = qa[3] * 0.5f + qb[3] * 0.5f;
+        
+        return;
+    }
+    
+    float ratioA = sinf((1.0f - t) * halfTheta) / sinHalfTheta;
+    float ratioB = sinf(t * halfTheta) / sinHalfTheta;
+    
+    //calculate Quaternion
+    qc[0] = qa[0] * ratioA + qb[0] * ratioB;
+    qc[1] = qa[1] * ratioA + qb[1] * ratioB;
+    qc[2] = qa[2] * ratioA + qb[2] * ratioB;
+    qc[3] = qa[3] * ratioA + qb[3] * ratioB;
+}
+
+void Tools::rotVecToEuler(const float r[3], float eu[3]) {
+    float ang = VEC3_NORM(r);
+    float s = sinf(ang);
+    float c = cosf(ang);
+    float t = 1.0f - c;
+    
+    float x = r[0] / ang;
+    float y = r[1] / ang;
+    float z = r[2] / ang;
+    
+    float singCheck = x * y * t + z * s;
+    if (fabsf(singCheck) > 0.998f) { // north or south pole singularity detected
+        float sign = singCheck > 0.0f ? 1.0f : -1.0f;
+		eu[0] = sign * 2.0f * atan2f(x * sinf(ang / 2.0f), cosf(ang / 2.0f));
+		eu[1] = sign * M_PI / 2.0f;
+		eu[2] = 0.0f;
+	} else {
+        eu[0] = atan2f(y * s - x * z * t, 1.0f - (y*y + z*z) * t);
+        eu[1] = asinf(x * y * t + z * s);
+        eu[2] = atan2f(x * s - y * z * t, 1.0f - (x*x + z*z) * t);
+    }
+    
+//    if (eu[0] < 0.0f) {
+//        eu[0] += 2.0f * M_PI;
+//        eu[1] *= -1.0f;
+//    } else if (eu[0] > 2.0f * M_PI) {
+//        eu[0] -= 2.0f * M_PI;
+//        eu[1] *= -1.0f;
+//        eu[2] = 2.0f * M_PI - eu[2];
+//    }
+    
+//    // extension: always keep the euler values positive
+//    if (eu[0] < 0.0f) eu[0] += 2.0f * M_PI;
+//    if (eu[1] < 0.0f) eu[1] += 2.0f * M_PI;
+//    if (eu[2] < 0.0f) eu[2] += 2.0f * M_PI;
+    
+//    float cosrx = cosf(eu[0]);
+//    float m10 = cosf(eu[0]) * cosf(eu[1]);
+//    float m5 = cosf(eu[0]) * cosf(eu[2]);
+//    if (m10 * cosrx < 0.0f) eu[1] += M_PI;
+//    if (m5 * cosrx < 0.0f) eu[2] += M_PI;
+}
+
+void Tools::eulerToRotVec(const float eu[3], float r[3]) {
+    float euXhalf = eu[0] / 2.0f;
+    float euYhalf = eu[1] / 2.0f;
+    float euZhalf = eu[2] / 2.0f;
+    
+    float c1 = cosf(euXhalf);
+	float s1 = sinf(euXhalf);
+	float c2 = cosf(euYhalf);
+	float s2 = sinf(euYhalf);
+	float c3 = cosf(euZhalf);
+	float s3 = sinf(euZhalf);
+    
+    float c1c2 = c1 * c2;
+	float s1s2 = s1 * s2;
+	float w = c1c2 * c3 - s1s2 * s3;
+	r[0] =c1c2 * s3 + s1s2 * c3;
+	r[1] =s1 * c2 * c3 + c1 * s2 * s3;
+	r[2] =c1 * s2 * c3 - s1 * c2 * s3;
+	float ang = 2.0f * acosf(w);
+    
+    float norm = VEC3_NORM(r);
+	if (norm < 0.001f) { // when all euler angles are zero angle =0 so
+		// we can set axis to anything to avoid divide by zero
+		r[0] = 1.0f;
+		r[1] = r[2] = 0.0f;
+	} else {
+		float magn = ang / sqrtf(norm);
+    	r[0] *= magn;
+    	r[1] *= magn;
+    	r[2] *= magn;
+    }
+}
+
 //void Tools::getAvgRotVec(const float *rotVecs, int numRotVecs, float *avgRotVec) {
 //    float avgTheta = 0.0f;
 //    float avgDirVec[] = {0.0f, 0.0f, 0.0f};
