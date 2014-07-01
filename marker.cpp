@@ -69,8 +69,18 @@ void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing
 	r.convertTo(rVec, CV_32F);
 	t.convertTo(tVec, CV_32F);
     
+    
     float *rVecPtr = rVec.ptr<float>(0);
     float *tVecPtr = tVec.ptr<float>(0);
+    
+//    float curRotQuat[4];
+//    Tools::rotVecToQuat(rVecPtr, curRotQuat);
+//    
+//    if (prevRotQuat[3] != 0.0f) {
+//        
+//        
+//        printf("quat dot: %f\n", Tools::quatDot(curRotQuat, prevRotQuat));
+//    }
     
     if (useSmoothing) {
         pushVecsToHistory(rVecPtr, tVecPtr);
@@ -81,10 +91,12 @@ void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing
     }
     
 //    Tools::composeModelViewMatrix(tVecPtr, rVecPtr, poseMat);
-//    
+
 ////    cv::Mat cvPoseMat(4, 4, CV_32FC1, poseMat);
 ////    cvPoseMat = cvPoseMat.inv();
 ////    memcpy(poseMat, cvPoseMat.data, 16 * sizeof(float));
+    
+    printf("ocv_ar::Marker %d - rvec: %f, %f, %f\n", id, rVecPtr[0], rVecPtr[1], rVecPtr[2]);
     
     // create rotation matrix
 	cv::Mat rotMat(3, 3, CV_32FC1);
@@ -115,7 +127,11 @@ void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing
     }
     
     poseMat[15] = 1.0f;
+    
+//    Tools::printFloatMat(poseMat, 4, 4);
     /* END modified code from ArUco lib */
+    
+//    memcpy(prevRotQuat, curRotQuat, sizeof(float) * 4);
 }
 
 void Marker::sortPoints() {
@@ -158,15 +174,16 @@ void Marker::init() {
 	rVec.zeros(3, 1, CV_32F);
 	tVec.zeros(3, 1, CV_32F);
     
+//    memset(prevRotQuat, 0, sizeof(float) * 4);
+    
     // create vectory history arrays
-    const int numHistElems = OCV_AR_CONF_SMOOTHING_HIST_SIZE * 3;
-    tVecHist = new float[numHistElems];
-    rVecHist = new float[numHistElems];
+    tVecHist = new float[OCV_AR_CONF_SMOOTHING_HIST_SIZE * 3];
+    rVecHist = new float[OCV_AR_CONF_SMOOTHING_HIST_SIZE * 4];  // holds quaternions
     
     // initialize them with zeros
-    const size_t bytesHistElems = sizeof(float) * numHistElems;
-    memset(tVecHist, 0, bytesHistElems);
-    memset(rVecHist, 0, bytesHistElems);
+//    const size_t bytesHistElems = sizeof(float) * numHistElems;
+    memset(tVecHist, 0, sizeof(float) * OCV_AR_CONF_SMOOTHING_HIST_SIZE * 3);
+    memset(rVecHist, 0, sizeof(float) * OCV_AR_CONF_SMOOTHING_HIST_SIZE * 4);
     
 	sortPoints();
 	calcShapeProperties();
@@ -174,22 +191,43 @@ void Marker::init() {
 }
 
 void Marker::pushVecsToHistory(const float *r, const float *t) {
-    const int numHistElems = OCV_AR_CONF_SMOOTHING_HIST_SIZE * 3;
+    const int numHistElemsT = OCV_AR_CONF_SMOOTHING_HIST_SIZE * 3;
+    const int numHistElemsR = OCV_AR_CONF_SMOOTHING_HIST_SIZE * 4;
     
     // delete the oldest elements and move up the newer ones
-    for (int i = 3; i < numHistElems; i++) {
+    for (int i = 3; i < numHistElemsT; i++) {
         tVecHist[i - 3] = tVecHist[i];
-        rVecHist[i - 3] = rVecHist[i];
+    }
+    
+    for (int i = 4; i < numHistElemsR; i++) {
+        rVecHist[i - 4] = rVecHist[i];
     }
     
     // add the new elements to the last position
-    tVecHist[numHistElems - 3] = t[0];
-    tVecHist[numHistElems - 2] = t[1];
-    tVecHist[numHistElems - 1] = t[2];
+    tVecHist[numHistElemsT - 3] = t[0];
+    tVecHist[numHistElemsT - 2] = t[1];
+    tVecHist[numHistElemsT - 1] = t[2];
     
-    rVecHist[numHistElems - 3] = r[0];
-    rVecHist[numHistElems - 2] = r[1];
-    rVecHist[numHistElems - 1] = r[2];
+    float q[4];
+    Tools::rotVecToQuat(r, q);
+
+    // check if the current quaternion <q> is far from the prev. quat
+    // if so, probably the signs need to be changed
+    if (Tools::quatDot(q, &(rVecHist[numHistElemsR - 8])) < 0.0f) {
+        q[0] *= -1.0f;
+        q[1] *= -1.0f;
+        q[2] *= -1.0f;
+        q[3] *= -1.0f;
+        printf("q is far\n");
+    }
+    
+    // store the new quaternion <q>
+    memcpy(&(rVecHist[numHistElemsR - 4]), q, sizeof(float) * 4);
+    
+//    rVecHist[numHistElemsR - 4] = q[0];
+//    rVecHist[numHistElemsR - 3] = q[1];
+//    rVecHist[numHistElemsR - 2] = q[2];
+//    rVecHist[numHistElemsR - 1] = q[3];
     
     if (pushedHistVecs < OCV_AR_CONF_SMOOTHING_HIST_SIZE) {
         pushedHistVecs++;
@@ -197,14 +235,44 @@ void Marker::pushVecsToHistory(const float *r, const float *t) {
 }
 
 void Marker::calcSmoothPoseVecs(float *r, float *t) {
-    // calculate the avarage rotation angle for all axes (n)
-    for (int n = 0; n < 3; n++) {
-        float buff[OCV_AR_CONF_SMOOTHING_HIST_SIZE];
-        for (int i = 0; i < OCV_AR_CONF_SMOOTHING_HIST_SIZE; i++) {
-            buff[i] = rVecHist[i * 3 + n];
-        }
-        r[n] = Tools::getAverageAngle(buff, OCV_AR_CONF_SMOOTHING_HIST_SIZE);
+    // calculate average quaternion for the rotation
+    // this works because the quaternions are likely to be
+    // quite close to each other
+    
+    float avgQuat[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+    for (int i = 0; i < OCV_AR_CONF_SMOOTHING_HIST_SIZE; ++i) {
+        avgQuat[0] += rVecHist[i * 4    ];
+        avgQuat[1] += rVecHist[i * 4 + 1];
+        avgQuat[2] += rVecHist[i * 4 + 2];
+        avgQuat[3] += rVecHist[i * 4 + 3];
     }
+    
+    avgQuat[0] /= (float)OCV_AR_CONF_SMOOTHING_HIST_SIZE;
+    avgQuat[1] /= (float)OCV_AR_CONF_SMOOTHING_HIST_SIZE;
+    avgQuat[2] /= (float)OCV_AR_CONF_SMOOTHING_HIST_SIZE;
+    avgQuat[3] /= (float)OCV_AR_CONF_SMOOTHING_HIST_SIZE;
+    
+    Tools::quatToRotVec(avgQuat, r);
+    
+    // calculate the avarage rotation angle for all axes (n)
+//    for (int n = 0; n < 3; n++) {
+//        float buff[OCV_AR_CONF_SMOOTHING_HIST_SIZE];
+//        for (int i = 0; i < OCV_AR_CONF_SMOOTHING_HIST_SIZE; i++) {
+//            buff[i] = rVecHist[i * 3 + n];
+//        }
+//        r[n] = Tools::getAverageAngle(buff, OCV_AR_CONF_SMOOTHING_HIST_SIZE);
+//    }
+    
+//    Tools::getAvgRotVec(rVecHist, OCV_AR_CONF_SMOOTHING_HIST_SIZE, r);
+//    cv::Mat rotMatHistSum = cv::Mat::zeros(3, 3, CV_32FC1);
+//    for (std::list<cv::Mat>::const_iterator it = rVecHist.begin();
+//         it != rVecHist.end();
+//         ++it)
+//    {
+//        rotMatHistSum += *it;
+//    }
+//    
+//    r =  rotMatHistSum / (float)OCV_AR_CONF_SMOOTHING_HIST_SIZE;
     
     // calculate the translation vector by forming the average of the former values
     t[0] = t[1] = t[2] = 0;    // reset to zeros

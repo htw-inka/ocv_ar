@@ -45,15 +45,30 @@ public:
      */
     static float getAverageAngle(float *angles, int count);
     
+    static void rotVecToQuat(const float r[3], float q[4]);
+    static void quatToRotVec(float q[4], float r[3]);
+    
+    static float quatDot(const float q1[4], const float q2[4]);
+    
 //    /**
-//     * calculate a ModelView Matrix from camera rotation and position (vectors)
+//     *
 //     */
-//    static void composeModelViewMatrix(float* camPos, float* camRot, float* matrixColumns);
+//    static void getAvgRotVec(const float *rotVecs, int numRotVecs, float *avgRotVec);
+    
+    /**
+     * calculate a ModelView Matrix from camera rotation and position (vectors)
+     */
+    static void composeModelViewMatrix(float* camPos, float* camRot, float* matrixColumns);
     
     /**
      * Get current timestamp in milliseconds
      */
     static double nowMs();
+    
+    /**
+     * Print matrix <m> with <rows> and <cols>.
+     */
+    static void printFloatMat(const float *m, int rows, int cols);
     
 /* BEGIN code from ArUco lib */
     static float norm( float a, float b, float c );
