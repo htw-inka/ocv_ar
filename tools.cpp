@@ -36,27 +36,29 @@ void Tools::matRot90CW(cv::Mat &m) {
 }
 
 float Tools::getAverageAngle(float *angles, int count) {
-    double x = 0;
-    double y = 0;
+    float x = 0;
+    float y = 0;
     
     // sum all values
     for (int i = 0; i < count; i++) {
-        x += cos(angles[i]);
-        y += sin(angles[i]);
+        x += cosf(angles[i]);
+        y += sinf(angles[i]);
     }
     
     // devide by the amount of values
-    x /= count;
-    y /= count;
+    x /= (float)count;
+    y /= (float)count;
     
-    if (x > 0) {
-        return atan(y / x);
-    } else if (x < 0) {
-        return M_PI + atan(y / x);
-    }
+    return atan2f(y, x);
     
-    // this will just be used when x = 0
-    return (y > 0) ? (M_PI / 2.0f) : -(M_PI / 2.0f);
+//    if (x > 0) {
+//        return atan(y / x);
+//    } else if (x < 0) {
+//        return M_PI + atan(y / x);
+//    }
+//    
+//    // this will just be used when x = 0
+//    return (y > 0) ? (M_PI / 2.0f) : -(M_PI / 2.0f);
 }
 
 void Tools::rotVecToQuat(const float r[3], float q[4]) {
@@ -96,6 +98,12 @@ float Tools::quatDot(const float q1[4], const float q2[4]) {
          + q1[1] * q2[1]
          + q1[2] * q2[2]
          + q1[3] * q2[3];
+}
+
+float Tools::vec3Dot(const float v1[3], const float v2[3]) {
+    return v1[0] * v2[0]
+         + v1[1] * v2[1]
+         + v1[2] * v2[2];
 }
 
 void Tools::slerp(const float qa[4], const float qb[4], float t, float qc[4]) {

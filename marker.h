@@ -184,6 +184,7 @@ private:
 //    float prevRotQuat[4];      // previous rotation quaternion
 //    std::list<cv::Mat> rVecHist;   // marker rotation history
     float *rVecHist;        // marker rotation history with N * 3 elements (euler vectors) for smoothing effect
+    float prevRVec[3];
     
     float poseMat[16];      // OpenGL 4x4 matrix with model-view-transformation
 };

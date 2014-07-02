@@ -73,6 +73,7 @@ void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing
     float *rVecPtr = rVec.ptr<float>(0);
     float *tVecPtr = tVec.ptr<float>(0);
     
+    float tempRVec[] = { rVecPtr[0], rVecPtr[1], rVecPtr[2] };
 //    printf("ocv_ar::Marker %d - rvec1: %f, %f, %f\n", id, rVecPtr[0], rVecPtr[1], rVecPtr[2]);
     
 //    float rEuler[3];
@@ -108,6 +109,17 @@ void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing
 //        memcpy(prevRotQuat, curRotQuat, sizeof(float) * 4);
 //    }
     
+    float rotVecDot = Tools::vec3Dot(prevRVec, rVecPtr);
+    if (rotVecDot < 0.0f) {
+        printf("ocv_ar::Marker %d - rvec1: %f, %f, %f\n", id, prevRVec[0], prevRVec[1], prevRVec[2]);
+        printf("ocv_ar::Marker %d - dot: %f\n", id, rotVecDot);
+        printf("ocv_ar::Marker %d - rvec2: %f, %f, %f\n", id, rVecPtr[0], rVecPtr[1], rVecPtr[2]);
+        
+        rVecPtr[0] *= -1.0f;
+        rVecPtr[1] *= -1.0f;
+        rVecPtr[2] *= -1.0f;
+    }
+    
     if (useSmoothing) {
         pushVecsToHistory(rVecPtr, tVecPtr);
         
@@ -115,6 +127,12 @@ void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing
             calcSmoothPoseVecs(rVecPtr, tVecPtr);
         }
     }
+    
+    prevRVec[0] = tempRVec[0];
+    prevRVec[1] = tempRVec[1];
+    prevRVec[2] = tempRVec[2];
+    
+//    printf("ocv_ar::Marker %d - rvec2: %f, %f, %f\n", id, rVecPtr[0], rVecPtr[1], rVecPtr[2]);
     
 //    Tools::composeModelViewMatrix(tVecPtr, rVecPtr, poseMat);
 

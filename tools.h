@@ -52,6 +52,7 @@ public:
     
     static void rotVecToEuler(const float r[3], float eu[3]);
     static void eulerToRotVec(const float eu[3], float r[3]);
+    static float vec3Dot(const float v1[3], const float v2[3]);
     
     static void slerp(const float qa[4], const float qb[4], float t, float qc[4]);
     
