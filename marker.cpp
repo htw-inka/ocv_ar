@@ -20,6 +20,19 @@
 
 using namespace ocv_ar;
 
+void printVec3TrigVals(float v[3]) {
+    float x1 = cosf(v[0]);
+    float y1 = sinf(v[0]);
+    float x2 = cosf(v[1]);
+    float y2 = sinf(v[1]);
+    float x3 = cosf(v[2]);
+    float y3 = sinf(v[2]);
+    
+    printf("> %f, %f\n", x1, y1);
+    printf("> %f, %f\n", x2, y2);
+    printf("> %f, %f\n", x3, y3);
+}
+
 #pragma mark public methods
 
 Marker::Marker(PointVec &pts) {
@@ -73,7 +86,9 @@ void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing
     float *rVecPtr = rVec.ptr<float>(0);
     float *tVecPtr = tVec.ptr<float>(0);
     
-    float tempRVec[] = { rVecPtr[0], rVecPtr[1], rVecPtr[2] };
+    float rVecEu[3];
+    Tools::rotVecToEuler(rVecPtr, rVecEu);
+    float tempRVec[] = { rVecEu[0], rVecEu[1], rVecEu[2] };
 //    printf("ocv_ar::Marker %d - rvec1: %f, %f, %f\n", id, rVecPtr[0], rVecPtr[1], rVecPtr[2]);
     
 //    float rEuler[3];
@@ -109,23 +124,32 @@ void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing
 //        memcpy(prevRotQuat, curRotQuat, sizeof(float) * 4);
 //    }
     
-    float rotVecDot = Tools::vec3Dot(prevRVec, rVecPtr);
-    if (rotVecDot < 0.0f) {
+    float rotVecsAng = Tools::vec3Angle(prevRVec, rVecEu);
+    
+    if (rotVecsAng > 0.1f) {
         printf("ocv_ar::Marker %d - rvec1: %f, %f, %f\n", id, prevRVec[0], prevRVec[1], prevRVec[2]);
-        printf("ocv_ar::Marker %d - dot: %f\n", id, rotVecDot);
-        printf("ocv_ar::Marker %d - rvec2: %f, %f, %f\n", id, rVecPtr[0], rVecPtr[1], rVecPtr[2]);
+        printVec3TrigVals(prevRVec);
+        printf("ocv_ar::Marker %d - angle: %f\n", id, rotVecsAng);
+        printf("ocv_ar::Marker %d - rvec2: %f, %f, %f\n", id, rVecEu[0], rVecEu[1], rVecEu[2]);
+        printVec3TrigVals(rVecEu);
+        printf("---\n");
         
-        rVecPtr[0] *= -1.0f;
-        rVecPtr[1] *= -1.0f;
-        rVecPtr[2] *= -1.0f;
+//        rVecEu[0] += M_PI;
+////        rVecEu[1] *= -1.0f;
+//        rVecEu[2] = M_PI - rVecEu[2];
+        rVecEu[0] = prevRVec[0];
+        rVecEu[1] = prevRVec[1];
+        rVecEu[2] = prevRVec[2];
     }
     
     if (useSmoothing) {
-        pushVecsToHistory(rVecPtr, tVecPtr);
+        pushVecsToHistory(rVecEu, tVecPtr);
         
         if (pushedHistVecs >= OCV_AR_CONF_SMOOTHING_HIST_SIZE) {
-            calcSmoothPoseVecs(rVecPtr, tVecPtr);
+            calcSmoothPoseVecs(rVecEu, tVecPtr);
         }
+        
+        Tools::eulerToRotVec(rVecEu, rVecPtr);
     }
     
     prevRVec[0] = tempRVec[0];
@@ -239,18 +263,18 @@ void Marker::pushVecsToHistory(const float *r, const float *t) {
         rVecHist[i - 3] = rVecHist[i];
     }
     
-    // convert rotation vector to euler values
-    float eu[3];
-    Tools::rotVecToEuler(r, eu);
+//    // convert rotation vector to euler values
+//    float eu[3];
+//    Tools::rotVecToEuler(r, eu);
 
     // add the new elements to the last position
     tVecHist[numHistElems - 3] = t[0];
     tVecHist[numHistElems - 2] = t[1];
     tVecHist[numHistElems - 1] = t[2];
     
-    rVecHist[numHistElems - 3] = eu[0];
-    rVecHist[numHistElems - 2] = eu[1];
-    rVecHist[numHistElems - 1] = eu[2];
+    rVecHist[numHistElems - 3] = r[0];
+    rVecHist[numHistElems - 2] = r[1];
+    rVecHist[numHistElems - 1] = r[2];
     
 //    float q[4];
 //    Tools::rotVecToQuat(r, q);
@@ -299,17 +323,17 @@ void Marker::calcSmoothPoseVecs(float *r, float *t) {
 //    Tools::quatToRotVec(avgQuat, r);
     
     // calculate the avarage rotation angle for all axes (n)
-    float avgEu[3]; // averaged euler angles
+//    float avgEu[3]; // averaged euler angles
     for (int n = 0; n < 3; n++) {
         float buff[OCV_AR_CONF_SMOOTHING_HIST_SIZE];
         for (int i = 0; i < OCV_AR_CONF_SMOOTHING_HIST_SIZE; i++) {
             buff[i] = rVecHist[i * 3 + n];
         }
-        avgEu[n] = Tools::getAverageAngle(buff, OCV_AR_CONF_SMOOTHING_HIST_SIZE);
+        r[n] = Tools::getAverageAngle(buff, OCV_AR_CONF_SMOOTHING_HIST_SIZE);
     }
     
     // transform the averaged euler vector back to rotation vector
-    Tools::eulerToRotVec(avgEu, r);
+//    Tools::eulerToRotVec(avgEu, r);
     
 //    Tools::getAvgRotVec(rVecHist, OCV_AR_CONF_SMOOTHING_HIST_SIZE, r);
 //    cv::Mat rotMatHistSum = cv::Mat::zeros(3, 3, CV_32FC1);

@@ -106,6 +106,13 @@ float Tools::vec3Dot(const float v1[3], const float v2[3]) {
          + v1[2] * v2[2];
 }
 
+float Tools::vec3Angle(const float v1[3], const float v2[3]) {
+    float l = VEC3_NORM(v1) * VEC3_NORM(v2);
+    if (l == 0.0f) return 0.0f;
+    
+    return acosf(vec3Dot(v1, v2) / l);
+}
+
 void Tools::slerp(const float qa[4], const float qb[4], float t, float qc[4]) {
     float cosHalfTheta = quatDot(qa, qb);
     

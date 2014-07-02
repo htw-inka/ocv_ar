@@ -505,6 +505,11 @@ void Detect::setOutputFrameOnCurProcLevel(FrameProcLevel curLvl, cv::Mat *srcFra
 }
 
 void Detect::drawMarker(cv::Mat &img, const Marker &m, bool drawId) {
+	cv::Scalar p1clr(255, 255, 255, 255);
+	cv::Scalar p2clr(191, 191, 191, 255);
+	cv::Scalar p3clr(128, 128, 128, 255);
+    cv::Scalar p4clr( 64,  64,  64, 255);
+    
 	cv::Scalar white(255, 255, 255, 255);
 	cv::Scalar blue(0, 0, 255, 255);
     cv::Scalar green(0, 255, 0, 255);
@@ -514,6 +519,12 @@ void Detect::drawMarker(cv::Mat &img, const Marker &m, bool drawId) {
 	const int numPts = (int)markerPts.size();
 	for (int i = 0; i < numPts; i++) {
 		cv::line(img, markerPts[i], markerPts[(i + 1) % numPts], white);
+        
+        cv::Point2f vertex = markerPts[i];
+        cv::Point vertex1 = cv::Point(vertex.x - 5, vertex.y - 5);
+        cv::Point vertex2 = cv::Point(vertex.x + 5, vertex.y + 5);
+        cv::Scalar vertexClr(255 / (i + 1), 255 / (i + 1), 255 / (i + 1), 255);
+        cv::rectangle(img, vertex1, vertex2, vertexClr);
 	}
     
 	// draw centroid
