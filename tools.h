@@ -34,6 +34,8 @@ public:
      */
     static float distSquared(cv::Point2f p1, cv::Point2f p2);
     
+    static float lengthSquared(cv::Point2f p);
+    
     /**
      * Fast clock-wise rotation of <m> by 90°
      */

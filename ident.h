@@ -58,11 +58,6 @@ public:
     IdentificatorType getType() { return type; }
     
 protected:
-    /**
-     * Helper function to set an <id> and a valid rotation <rot> to a <marker>.
-     */
-    void setFoundPropertiesForMarker(Marker &marker, int id, int rot);
-    
     
     IdentificatorType type; // identificator type
     int reqMarkerSize;      // required marker size

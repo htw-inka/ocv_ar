@@ -73,7 +73,8 @@ void Track::update() {
             }
         }
         
-        // check if this marker was detected this time and if not, if it already time out
+        // check if this marker was detected this time
+        // and if not, if it already time out
         if (!markerUpdated && now - existingMrk->getDetectionTimeMs() > OCV_AR_CONF_TRACKER_MARKER_TIMEOUT_MS) {
             // if so, remove it!
             printf("ocv_ar::Track - lost marker %d\n", existingMrkId);

@@ -59,8 +59,8 @@ bool Identificator7x7::readMarkerCode(const cv::Mat &area, Marker &marker) {
     	if (checkMarkerCode(bitMatrix)) { // found a valid marker code!
             // set the id and rotate the corner points
             int id = markerCodeToId(bitMatrix);
-            setFoundPropertiesForMarker(marker, id, rot);
-
+            marker.setId(id);
+            
             return true;
     	}
         

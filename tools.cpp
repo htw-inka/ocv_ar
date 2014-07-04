@@ -30,6 +30,10 @@ float Tools::distSquared(cv::Point2f p1, cv::Point2f p2) {
 	return dX * dX + dY * dY;
 }
 
+float Tools::lengthSquared(cv::Point2f p) {
+    return p.x * p.x + p.y * p.y;
+}
+
 void Tools::matRot90CW(cv::Mat &m) {
     cv::transpose(m, m);
     cv::flip(m, m, 1);

@@ -13,6 +13,8 @@
  * See LICENSE for license.
  */
 
+#include <limits>
+
 #include "marker.h"
 
 #include "conf.h"
@@ -70,10 +72,6 @@ void Marker::updateDetectionTime() {
     detectMs = Tools::nowMs();
 }
 
-void Marker::rotatePoints(int rot) {
-	rotate(points.begin(), points.begin() + 4 - rot, points.end());
-}
-
 void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing) {
     if (!r.data || !t.data) return;
     
@@ -124,23 +122,23 @@ void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing
 //        memcpy(prevRotQuat, curRotQuat, sizeof(float) * 4);
 //    }
     
-    float rotVecsAng = Tools::vec3Angle(prevRVec, rVecEu);
-    
-    if (rotVecsAng > 0.1f) {
-        printf("ocv_ar::Marker %d - rvec1: %f, %f, %f\n", id, prevRVec[0], prevRVec[1], prevRVec[2]);
-        printVec3TrigVals(prevRVec);
-        printf("ocv_ar::Marker %d - angle: %f\n", id, rotVecsAng);
-        printf("ocv_ar::Marker %d - rvec2: %f, %f, %f\n", id, rVecEu[0], rVecEu[1], rVecEu[2]);
-        printVec3TrigVals(rVecEu);
-        printf("---\n");
-        
-//        rVecEu[0] += M_PI;
-////        rVecEu[1] *= -1.0f;
-//        rVecEu[2] = M_PI - rVecEu[2];
-        rVecEu[0] = prevRVec[0];
-        rVecEu[1] = prevRVec[1];
-        rVecEu[2] = prevRVec[2];
-    }
+//    float rotVecsAng = Tools::vec3Angle(prevRVec, rVecEu);
+//    
+//    if (rotVecsAng > 0.1f) {
+//        printf("ocv_ar::Marker %d - rvec1: %f, %f, %f\n", id, prevRVec[0], prevRVec[1], prevRVec[2]);
+//        printVec3TrigVals(prevRVec);
+//        printf("ocv_ar::Marker %d - angle: %f\n", id, rotVecsAng);
+//        printf("ocv_ar::Marker %d - rvec2: %f, %f, %f\n", id, rVecEu[0], rVecEu[1], rVecEu[2]);
+//        printVec3TrigVals(rVecEu);
+//        printf("---\n");
+//        
+////        rVecEu[0] += M_PI;
+//////        rVecEu[1] *= -1.0f;
+////        rVecEu[2] = M_PI - rVecEu[2];
+//        rVecEu[0] = prevRVec[0];
+//        rVecEu[1] = prevRVec[1];
+//        rVecEu[2] = prevRVec[2];
+//    }
     
     if (useSmoothing) {
         pushVecsToHistory(rVecEu, tVecPtr);
@@ -199,6 +197,12 @@ void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing
     /* END modified code from ArUco lib */
 }
 
+#pragma mark private methods
+
+void Marker::rotatePoints(int rot) {
+	rotate(points.begin(), points.begin() + 4 - rot, points.end());
+}
+
 void Marker::sortPoints() {
 	// Sort the points in anti-clockwise order
 	cv::Point v1 = points[1] - points[0];
@@ -209,6 +213,28 @@ void Marker::sortPoints() {
 	if ((v1.x * v2.y) - (v1.y * v2.x) < 0.0) {
 		swap(points[1], points[3]);
 	}
+    
+    float minDist = std::numeric_limits<float>::max();
+    int rotBy = 0;
+    int ptIdx = 0;
+    for (Point2fVec::const_iterator it = points.begin();
+         it != points.end();
+         ++it)
+    {
+        float dist = Tools::lengthSquared(*it);
+        if (dist < minDist) {
+            minDist = dist;
+            rotBy = ptIdx;
+        }
+        
+        ptIdx++;
+    }
+    
+    printf("ocv_ar::Marker %d - rotating points by %d\n", id, rotBy);
+    
+    if (rotBy > 0) {
+        rotatePoints(rotBy);
+    }
 }
 
 void Marker::calcShapeProperties() {
@@ -228,8 +254,6 @@ void Marker::calcShapeProperties() {
     
 	perimeterRad = maxDist;
 }
-
-#pragma mark private methods
 
 void Marker::init() {
     // set defaults

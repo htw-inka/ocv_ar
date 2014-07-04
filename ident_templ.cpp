@@ -70,7 +70,6 @@ bool IdentificatorTemplMatch::readMarkerCode(const cv::Mat &area, Marker &marker
     {
         int validRot;
         if (checkTemplateRotations(areaContent, it->second, &validRot)) {  // found a matching template!
-            setFoundPropertiesForMarker(marker, it->first, validRot);
             marker.setId(it->first);
             return true;
         }
