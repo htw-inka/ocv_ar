@@ -59,6 +59,9 @@ public:
      */
     ~Detect();
     
+    void lockMarkers();
+    void unlockMarkers();
+    
     /**
      * Prepare for input frames of size <frameW> x <frameH> with <frameChan>
      * color channels. Specify a conversion type <cvtType> for grayscale conversion of
@@ -112,7 +115,7 @@ public:
     /**
      * Process the input frame to detect and identify markers.
      */
-    void processFrame();
+    void processFrame(bool enableMutex = false);
     
     /**
      * After detection and identification of the markers, estimate their 3D pose.
@@ -189,11 +192,16 @@ private:
      */
     void drawMarker(cv::Mat &img, const Marker &m, bool drawId);
     
+    /**
+     * Calculates the OpenGL projection matrix for a view of size <viewW> x <viewH>.
+     * See <getProjMat()>.
+     */
     void calcProjMat(float viewW, float viewH);
     
     
-    
     bool prepared;                  // detector is prepared (<prepare()> called)?
+    
+    bool markersLocked;             // mutex variable to lock markers vector access
     
     int inputFrameCvtType;          // color conversion type for input frames
     

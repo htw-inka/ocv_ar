@@ -70,6 +70,8 @@ Marker::~Marker() {
 
 void Marker::mapPoints(const ocv_ar::Marker &otherMrk) {
     Point2fVec otherPts = otherMrk.getPoints();
+    if (otherPts.size() <= 0) return;
+    
     int rotBy = 0;
     
     // find the rotation the rotation that yields minimum average distance
@@ -91,7 +93,7 @@ void Marker::mapPoints(const ocv_ar::Marker &otherMrk) {
     }
     
     // rotate our points to match the vertex order of <otherMrk>
-    printf("ocv_ar::Marker %d - rotating vertices by %d with min. avg. dist. %f\n", id, rotBy, minAvgDist);
+//    printf("ocv_ar::Marker %d - rotating vertices by %d with min. avg. dist. %f\n", id, rotBy, minAvgDist);
     rotatePoints(rotBy);
 }
 

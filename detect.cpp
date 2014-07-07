@@ -222,14 +222,19 @@ void Detect::setInputFrame(const cv::Mat *frame, bool doNotCopyGrayscaleImg) {
     }
 }
 
-void Detect::processFrame() {
+void Detect::processFrame(bool enableMutex) {
     // defines the whole marker detection pipeline:
     
     preprocess();
     performThreshold();
     findContours();
+    
+    if (enableMutex) lockMarkers();
+    
     findMarkerCandidates();
     identifyMarkers();
+    
+    if (enableMutex) unlockMarkers();
 }
 
 void Detect::estimateMarkersPoses() {
@@ -261,6 +266,15 @@ cv::Mat *Detect::getOutputFrame() const {
 }
 
 #pragma mark private methods
+
+void Detect::lockMarkers() {
+    while (markersLocked) {};
+    markersLocked = true;
+}
+
+void Detect::unlockMarkers() {
+    markersLocked = false;
+}
 
 void Detect::preprocess() {
     // downscale the image

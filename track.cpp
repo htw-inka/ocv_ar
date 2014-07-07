@@ -20,17 +20,30 @@ using namespace ocv_ar;
 void Track::detect(const cv::Mat *frame) {
     assert(detector && frame);
     
+    if (detectionRunning) return;
+    detectionRunning = true;
+    
     // set the input frame
     detector->setInputFrame(frame, frame->channels() == 1);
     
+//    lockMarkers();  // lock markers map
+    
     // detect and identify the markers
-    detector->processFrame();
+    detector->processFrame(true);
     
     // correct the vertices of the found markers
+    lockMarkers();
+    detector->lockMarkers();
     correctMarkerVertexOrder(detector->getMarkers());
     
     // estimate the markers' 3D poses
     detector->estimateMarkersPoses();
+
+    detector->unlockMarkers();
+    unlockMarkers();
+    
+//    unlockMarkers();  // lock markers map
+    detectionRunning = false;
 }
 
 void Track::lockMarkers() {
@@ -43,11 +56,12 @@ void Track::unlockMarkers() {
 }
 
 void Track::update() {
+    lockMarkers();  // lock markers map
+    
     // get the vector of detected markers
     vector<Marker *> newMarkers = detector->getMarkers();
     
     // update already existing markers
-    lockMarkers();
     double now = Tools::nowMs();
     for (MarkerMap::iterator it = markers.begin();
          it != markers.end();
@@ -106,7 +120,7 @@ void Track::update() {
         printf("ocv_ar::Track - added new marker %d\n", newMrk->getId());
     }
     
-    unlockMarkers();
+    unlockMarkers();    // unlock markers map
 }
 
 #pragma mark private methods
@@ -115,13 +129,12 @@ void Track::correctMarkerVertexOrder(std::vector<Marker *> newMarkers) {
     // map the vertex order of currently found markers to previously found
     // markers. this prevents the vertex order from jumping around and
     // therefore changing the rotation vector of the markers
-    lockMarkers();  // lock markers vector
+//    lockMarkers();  // lock markers map
     for (MarkerMap::const_iterator it = markers.begin();
          it != markers.end();
          ++it)
     {
         int existingMrkId = it->first;
-        const Marker *existingMrk = &it->second;
         
         // try to find a matching marker in the "new markers" vector
         for (vector<Marker *>::iterator newMrkIt = newMarkers.begin();
@@ -132,10 +145,10 @@ void Track::correctMarkerVertexOrder(std::vector<Marker *> newMarkers) {
             if (existingMrkId == newMrk->getId()) { // we found a matching marker
                 // update the new marker so that the order of vertices matches to
                 // the existing marker
-                newMrk->mapPoints(*existingMrk);
+                newMrk->mapPoints(it->second);
             }
         }
     }
     
-    unlockMarkers();    // unlock markers vector again
+//    unlockMarkers();    // unlock markers map again
 }

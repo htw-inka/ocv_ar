@@ -39,7 +39,9 @@ typedef std::pair<int, Marker> MarkerMapPair;
  */
 class Track {
 public:
-    Track(Detect *detectorPtr) : detector(detectorPtr), markersLocked(false)
+    Track(Detect *detectorPtr) : detector(detectorPtr),
+                                 markersLocked(false),
+                                 detectionRunning(false)
     {};
     
     void detect(const cv::Mat *frame);
@@ -57,6 +59,8 @@ private:
     
     MarkerMap markers;
     bool markersLocked;
+    
+    bool detectionRunning;
     
     Detect *detector;   // weak ref to Detect object
 };
