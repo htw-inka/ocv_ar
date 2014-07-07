@@ -224,12 +224,13 @@ void Detect::setInputFrame(const cv::Mat *frame, bool doNotCopyGrayscaleImg) {
 }
 
 void Detect::processFrame() {
-    // defines the whole marker detection pipeline:
+    // defines the whole marker detection pipeline WITHOUT estimating the
+    // 3D pose of a marker. you need to call <estimateMarkersPoses()> for
+    // this afterwards
     
     preprocess();
     performThreshold();
     findContours();
-    
     findMarkerCandidates();
     identifyMarkers();
 }
@@ -253,11 +254,6 @@ void Detect::estimateMarkersPoses() {
         
         // generate an OpenGL model-view matrix from the rotation and translation vectors
         marker->updatePoseMat(rVec, tVec);
-        
-        // draw marker
-        if (outFrame && outFrameProcLvl == PROC_LEVEL_DETECTED_MARKERS) {
-            drawMarker(*outFrame, *marker, true);
-        }
     }
 }
 
@@ -441,29 +437,29 @@ void Detect::identifyMarkers() {
                              cv::Size(5, 5), cv::Size(-1,-1),
                              cv::TermCriteria(CV_TERMCRIT_ITER, OCV_AR_CONF_REFINE_CORNERS_ITER, 0.1f));	// max. iterations, min. epsilon
 #endif
-//            // draw marker
-//            if (outFrame && outFrameProcLvl == PROC_LEVEL_DETECTED_MARKERS) {
-//                float r = it->getPerimeterRadius();
-//                cv::Point o = it->getCentroid() - (0.5f * cv::Point2f(r, r));
-//                cv::Rect roi(o, normMarkerImg.size());
-//                cv::rectangle(*outFrame, roi, cv::Scalar(255,255,255,255));
-//                
-//                if (roi.x + roi.width > outFrame->cols) {
-//                    roi.width = roi.x + roi.width - outFrame->cols;
-//                }
-//                
-//                if (roi.y + roi.height > outFrame->rows) {
-//                    roi.height = roi.y + roi.height - outFrame->rows;
-//                }
-//                
-//                //                printf("ocv_ar::Detect - drawing marker with id %d at pos %d, %d with ROI at %d, %d (%d x %d)\n",
-//                //                       it->getId(), o.x, o.y, roi.x, roi.y, roi.width, roi.height);
-//                
-//                cv::Mat dstMat = (*outFrame)(roi);
-//                normMarkerImg.copyTo(dstMat);
-//                
-//                drawMarker(*outFrame, *it, true);
-//            }
+            // draw marker
+            if (outFrame && outFrameProcLvl == PROC_LEVEL_DETECTED_MARKERS) {
+                float r = it->getPerimeterRadius();
+                cv::Point o = it->getCentroid() - (0.5f * cv::Point2f(r, r));
+                cv::Rect roi(o, normMarkerImg.size());
+                cv::rectangle(*outFrame, roi, cv::Scalar(255,255,255,255));
+                
+                if (roi.x + roi.width > outFrame->cols) {
+                    roi.width = roi.x + roi.width - outFrame->cols;
+                }
+                
+                if (roi.y + roi.height > outFrame->rows) {
+                    roi.height = roi.y + roi.height - outFrame->rows;
+                }
+                
+                //                printf("ocv_ar::Detect - drawing marker with id %d at pos %d, %d with ROI at %d, %d (%d x %d)\n",
+                //                       it->getId(), o.x, o.y, roi.x, roi.y, roi.width, roi.height);
+                
+                cv::Mat dstMat = (*outFrame)(roi);
+                normMarkerImg.copyTo(dstMat);
+                
+                drawMarker(*outFrame, *it, true);
+            }
         }
     }
 }

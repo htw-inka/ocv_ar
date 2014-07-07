@@ -34,35 +34,26 @@ public:
      */
     static float distSquared(cv::Point2f p1, cv::Point2f p2);
     
-    static float lengthSquared(cv::Point2f p);
-    
     /**
      * Fast clock-wise rotation of <m> by 90°
      */
     static void matRot90CW(cv::Mat &m);
     
     /**
-     * Get the avarage angle of an array of angles <angles> with
+     * Get the avarage angle of an array of euler angles <angles> with
      * size <count>.
      */
     static float getAverageAngle(float *angles, int count);
     
-    static void rotVecToQuat(const float r[3], float q[4]);
-    static void quatToRotVec(float q[4], float r[3]);
-    
-    static float quatDot(const float q1[4], const float q2[4]);
-    
+    /**
+     * Convert an OpenCV rotation vector <r> to an Euler vector <eu>.
+     */
     static void rotVecToEuler(const float r[3], float eu[3]);
+    
+    /**
+     * Convert an an Euler vector <eu> to an OpenCV rotation vector <r>.
+     */
     static void eulerToRotVec(const float eu[3], float r[3]);
-    static float vec3Dot(const float v1[3], const float v2[3]);
-    static float vec3Angle(const float v1[3], const float v2[3]);
-    
-    static void slerp(const float qa[4], const float qb[4], float t, float qc[4]);
-    
-//    /**
-//     *
-//     */
-//    static void getAvgRotVec(const float *rotVecs, int numRotVecs, float *avgRotVec);
     
     /**
      * calculate a ModelView Matrix from camera rotation and position (vectors)

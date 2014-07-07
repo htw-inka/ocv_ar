@@ -12,7 +12,6 @@
 #include "track.h"
 
 #include "tools.h"
-#include "threading.h"
 
 using namespace ocv_ar;
 

@@ -51,6 +51,6 @@
 
 /** tracking **/
 
-#define OCV_AR_CONF_TRACKER_MARKER_TIMEOUT_MS   750.0
+#define OCV_AR_CONF_TRACKER_MARKER_TIMEOUT_MS   750.0   // tracker timeout for lost markers in millisec.
 
 #endif

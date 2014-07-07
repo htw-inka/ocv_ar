@@ -16,7 +16,7 @@ using namespace ocv_ar;
 pthread_mutex_t Threading::mutex;
 
 void Threading::init() {
-    pthread_mutex_init (&mutex, NULL);
+    pthread_mutex_init(&mutex, NULL);
 }
 
 void Threading::mutexLock() {

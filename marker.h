@@ -129,7 +129,9 @@ public:
     void updatePoseMat(const cv::Mat &r, const cv::Mat &t);
     
     /**
-     *
+     * Update the 3D pose for tracking, which means the T and R vectors from
+     * <other> will be copied and interpolated with previous T and R vectors
+     * to achieve a smooth transition between marker poses.
      */
     void updateForTracking(const Marker &other);
     
@@ -183,7 +185,7 @@ private:
     
     int id;                 // marker ID
     
-    double detectMs;         // timestamp of last detection in milliseconds
+    double detectMs;        // timestamp of last detection in milliseconds
     
     Point2fVec points;      // corner points
     
@@ -195,11 +197,8 @@ private:
     
     int pushedHistVecs;     // number of vectors in <tVecHist> and <rVecHist>
     
-    float *tVecHist;                // marker position history with N * 3 elements for smoothing effect
-//    float prevRotQuat[4];      // previous rotation quaternion
-//    std::list<cv::Mat> rVecHist;   // marker rotation history
+    float *tVecHist;        // marker position history with N * 3 elements for smoothing effect
     float *rVecHist;        // marker rotation history with N * 3 elements (euler vectors) for smoothing effect
-//    float prevRVec[3];
     
     float poseMat[16];      // OpenGL 4x4 matrix with model-view-transformation
 };

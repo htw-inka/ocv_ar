@@ -22,18 +22,6 @@
 
 using namespace ocv_ar;
 
-//void printVec3TrigVals(float v[3]) {
-//    float x1 = cosf(v[0]);
-//    float y1 = sinf(v[0]);
-//    float x2 = cosf(v[1]);
-//    float y2 = sinf(v[1]);
-//    float x3 = cosf(v[2]);
-//    float y3 = sinf(v[2]);
-//    
-//    printf("> %f, %f\n", x1, y1);
-//    printf("> %f, %f\n", x2, y2);
-//    printf("> %f, %f\n", x3, y3);
-//}
 
 #pragma mark public methods
 
@@ -72,7 +60,6 @@ Marker::~Marker() {
 
 void Marker::mapPoints(const ocv_ar::Marker &otherMrk) {
     Point2fVec otherPts = otherMrk.getPoints();
-//    if (otherPts.size() <= 0) return;
     
     int rotBy = 0;
     
@@ -106,6 +93,7 @@ void Marker::updateDetectionTime() {
 }
 
 void Marker::updateForTracking(const Marker &other) {
+    // copy the vertex points
     setPoints(other.getPoints());
     
     const cv::Mat r = other.getRVec().clone();
@@ -119,18 +107,25 @@ void Marker::updateForTracking(const Marker &other) {
 	r.convertTo(rVec, CV_32F);
 	t.convertTo(tVec, CV_32F);
     
+    // get pointers to the data
     float *rVecPtr = rVec.ptr<float>(0);
     float *tVecPtr = tVec.ptr<float>(0);
     
+    // "rVec" is an OpenCV rotation vector -> convert it to
+    // an Euler vector for interpolation
     float rVecEu[3];
     Tools::rotVecToEuler(rVecPtr, rVecEu);
     
+    // push the R and T vectors to the vector history for interpolation
     pushVecsToHistory(rVecEu, tVecPtr);
-        
+    
+    // if we have enough data, calculate the interpolated pose vectors
     if (pushedHistVecs >= OCV_AR_CONF_SMOOTHING_HIST_SIZE) {
         calcSmoothPoseVecs(rVecEu, tVecPtr);
     }
-        
+    
+    // convert back to rotation vector and save the result inside the
+    // OpenCV matrix
     Tools::eulerToRotVec(rVecEu, rVecPtr);
     
     // re-calculate the pose matrix from <rVec> and <tVec>
@@ -159,8 +154,6 @@ void Marker::init() {
     
 	rVec.zeros(3, 1, CV_32F);
 	tVec.zeros(3, 1, CV_32F);
-    
-    //    memset(prevRotQuat, 0, sizeof(float) * 4);
     
     // create vectory history arrays
     tVecHist = new float[OCV_AR_CONF_SMOOTHING_HIST_SIZE * 3];
@@ -217,10 +210,6 @@ void Marker::pushVecsToHistory(const float *r, const float *t) {
         tVecHist[i - 3] = tVecHist[i];
         rVecHist[i - 3] = rVecHist[i];
     }
-    
-//    // convert rotation vector to euler values
-//    float eu[3];
-//    Tools::rotVecToEuler(r, eu);
 
     // add the new elements to the last position
     tVecHist[numHistElems - 3] = t[0];
@@ -231,54 +220,13 @@ void Marker::pushVecsToHistory(const float *r, const float *t) {
     rVecHist[numHistElems - 2] = r[1];
     rVecHist[numHistElems - 1] = r[2];
     
-//    float q[4];
-//    Tools::rotVecToQuat(r, q);
-
-//    // check if the current quaternion <q> is far from the prev. quat
-//    // if so, probably the signs need to be changed
-//    if (Tools::quatDot(q, &(rVecHist[numHistElemsR - 8])) < 0.0f) {
-//        q[0] *= -1.0f;
-//        q[1] *= -1.0f;
-//        q[2] *= -1.0f;
-//        q[3] *= -1.0f;
-//        printf("q is far\n");
-//    }
-    
-    // store the new quaternion <q>
-//    memcpy(&(rVecHist[numHistElemsR - 4]), q, sizeof(float) * 4);
-    
-//    rVecHist[numHistElemsR - 4] = q[0];
-//    rVecHist[numHistElemsR - 3] = q[1];
-//    rVecHist[numHistElemsR - 2] = q[2];
-//    rVecHist[numHistElemsR - 1] = q[3];
-    
     if (pushedHistVecs < OCV_AR_CONF_SMOOTHING_HIST_SIZE) {
         pushedHistVecs++;
     }
 }
 
 void Marker::calcSmoothPoseVecs(float *r, float *t) {
-    // calculate average quaternion for the rotation
-    // this works because the quaternions are likely to be
-    // quite close to each other
-    
-//    float avgQuat[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-//    for (int i = 0; i < OCV_AR_CONF_SMOOTHING_HIST_SIZE; ++i) {
-//        avgQuat[0] += rVecHist[i * 4    ];
-//        avgQuat[1] += rVecHist[i * 4 + 1];
-//        avgQuat[2] += rVecHist[i * 4 + 2];
-//        avgQuat[3] += rVecHist[i * 4 + 3];
-//    }
-//    
-//    avgQuat[0] /= (float)OCV_AR_CONF_SMOOTHING_HIST_SIZE;
-//    avgQuat[1] /= (float)OCV_AR_CONF_SMOOTHING_HIST_SIZE;
-//    avgQuat[2] /= (float)OCV_AR_CONF_SMOOTHING_HIST_SIZE;
-//    avgQuat[3] /= (float)OCV_AR_CONF_SMOOTHING_HIST_SIZE;
-//    
-//    Tools::quatToRotVec(avgQuat, r);
-    
     // calculate the avarage rotation angle for all axes (n)
-//    float avgEu[3]; // averaged euler angles
     for (int n = 0; n < 3; n++) {
         float buff[OCV_AR_CONF_SMOOTHING_HIST_SIZE];
         for (int i = 0; i < OCV_AR_CONF_SMOOTHING_HIST_SIZE; i++) {
@@ -286,20 +234,6 @@ void Marker::calcSmoothPoseVecs(float *r, float *t) {
         }
         r[n] = Tools::getAverageAngle(buff, OCV_AR_CONF_SMOOTHING_HIST_SIZE);
     }
-    
-    // transform the averaged euler vector back to rotation vector
-//    Tools::eulerToRotVec(avgEu, r);
-    
-//    Tools::getAvgRotVec(rVecHist, OCV_AR_CONF_SMOOTHING_HIST_SIZE, r);
-//    cv::Mat rotMatHistSum = cv::Mat::zeros(3, 3, CV_32FC1);
-//    for (std::list<cv::Mat>::const_iterator it = rVecHist.begin();
-//         it != rVecHist.end();
-//         ++it)
-//    {
-//        rotMatHistSum += *it;
-//    }
-//    
-//    r =  rotMatHistSum / (float)OCV_AR_CONF_SMOOTHING_HIST_SIZE;
     
     // calculate the translation vector by forming the average of the former values
     t[0] = t[1] = t[2] = 0;    // reset to zeros

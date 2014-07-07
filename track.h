@@ -19,6 +19,7 @@
 
 #include "types.h"
 #include "detect.h"
+#include "threading.h"
 
 namespace ocv_ar {
     
@@ -39,28 +40,59 @@ typedef std::pair<int, Marker> MarkerMapPair;
  */
 class Track {
 public:
+    /**
+     * Constructor. Pass a pointer to a detector instance <detectorPtr>.
+     */
     Track(Detect *detectorPtr) : detector(detectorPtr),
                                  detectionRunning(false),
                                  newMarkersFresh(false)
-    {};
+    {
+        Threading::init();
+    };
     
+    /**
+     * Detect markers in <frame>.
+     */
     void detect(const cv::Mat *frame);
     
+    /**
+     * Update 3D poses of the detected markers.
+     */
     void update();
     
+    /**
+     * Lock the detected markers data. This is importent when detect(), update()
+     * and/or drawing of the markers is done in different threads.
+     */
     void lockMarkers();
+    
+    /**
+     * Unlock the detected markers data.
+     */
     void unlockMarkers();
     
+    /**
+     * Return a pointer to the detected markers map.
+     * The mapping is marker id -> Marker object.
+     */
     const MarkerMap *getMarkers() const { return &markers; }
     
 private:
+    /**
+     * Correct the marker vertex order of the markers in <newMarkers> by mapping
+     * their corner points to already existing markers. This is important to
+     * have a stable marker vertex point order.
+     */
     void correctMarkerVertexOrder(std::vector<Marker *> newMarkers);
     
-    std::vector<Marker> newMarkers;
-    bool newMarkersFresh;
-    MarkerMap markers;
     
-    bool detectionRunning;
+    std::vector<Marker> newMarkers; // vector that holds Marker objects from the
+                                    // last time when detect() was called
+    bool newMarkersFresh;   // is true if detect() was called before and is set
+                            // to false in update()
+    MarkerMap markers;      // markers to be tracked. mapping is
+                            // marker id -> Marker object
+    bool detectionRunning;  // is true while detect() is running
     
     Detect *detector;   // weak ref to Detect object
 };
