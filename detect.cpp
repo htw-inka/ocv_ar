@@ -230,7 +230,28 @@ void Detect::processFrame() {
     findContours();
     findMarkerCandidates();
     identifyMarkers();
-    estimatePositions();
+}
+
+void Detect::estimateMarkersPoses() {
+    // estimate the 3D pose of each found marker
+    for (vector<Marker *>::iterator it = foundMarkers.begin();
+         it != foundMarkers.end();
+         ++it)
+    {
+        Marker *marker = *it;
+        
+        // find marker pose from 3D-2D point correspondences between <normMarkerCoord3D>
+        // and 2D points in <marker->getPoints()>
+		cv::Mat rVec;   // pose rotation vector
+		cv::Mat tVec;   // pose translation vector
+		cv::solvePnP(normMarkerCoord3D, marker->getPoints(),
+					 camMat, distCoeff,
+					 rVec, tVec,
+					 false);
+        
+        // generate an OpenGL model-view matrix from the rotation and translation vectors
+        marker->updatePoseMat(rVec, tVec);
+    }
 }
 
 cv::Mat *Detect::getOutputFrame() const {
@@ -437,28 +458,6 @@ void Detect::identifyMarkers() {
                 drawMarker(*outFrame, *it, true);
             }
         }
-    }
-}
-
-void Detect::estimatePositions() {
-    // estimate the 3D pose of each found marker
-    for (vector<Marker *>::iterator it = foundMarkers.begin();
-         it != foundMarkers.end();
-         ++it)
-    {
-        Marker *marker = *it;
-        
-        // find marker pose from 3D-2D point correspondences between <normMarkerCoord3D>
-        // and 2D points in <marker->getPoints()>
-		cv::Mat rVec;   // pose rotation vector
-		cv::Mat tVec;   // pose translation vector
-		cv::solvePnP(normMarkerCoord3D, marker->getPoints(),
-					 camMat, distCoeff,
-					 rVec, tVec,
-					 false);
-        
-        // generate an OpenGL model-view matrix from the rotation and translation vectors
-        marker->updatePoseMat(rVec, tVec);
     }
 }
 

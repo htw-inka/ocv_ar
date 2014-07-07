@@ -15,11 +15,22 @@
 
 using namespace ocv_ar;
 
+#pragma mark public methods
+
 void Track::detect(const cv::Mat *frame) {
     assert(detector && frame);
+    
+    // set the input frame
     detector->setInputFrame(frame, frame->channels() == 1);
     
+    // detect and identify the markers
     detector->processFrame();
+    
+    // correct the vertices of the found markers
+    correctMarkerVertexOrder(detector->getMarkers());
+    
+    // estimate the markers' 3D poses
+    detector->estimateMarkersPoses();
 }
 
 void Track::lockMarkers() {
@@ -40,7 +51,7 @@ void Track::update() {
     double now = Tools::nowMs();
     for (MarkerMap::iterator it = markers.begin();
          it != markers.end();
-         )
+         )  // no op -- map::erase might be called below
     {
         int existingMrkId = it->first;
         Marker *existingMrk = &it->second;
@@ -50,14 +61,14 @@ void Track::update() {
         // try to find a matching marker in the "new markers" vector
         for (vector<Marker *>::const_iterator newMrkIt = newMarkers.begin();
              newMrkIt != newMarkers.end();
-             )
+             )  // no op -- vector::erase might be called below
         {
             const Marker *newMrk = *newMrkIt;
             if (existingMrkId == newMrk->getId()) { // we found a matching marker
 //                printf("ocv_ar::Track - updating marker %d\n", existingMrkId);
                 
                 // update the existing marker with the information of the "new" marker
-                existingMrk->updatePoseMat(newMrk->getRVec(), newMrk->getTVec(), true);
+                existingMrk->updateForTracking(*newMrk);
                 
                 // update detection time to "now"
                 existingMrk->updateDetectionTime();
@@ -96,4 +107,35 @@ void Track::update() {
     }
     
     unlockMarkers();
+}
+
+#pragma mark private methods
+
+void Track::correctMarkerVertexOrder(std::vector<Marker *> newMarkers) {
+    // map the vertex order of currently found markers to previously found
+    // markers. this prevents the vertex order from jumping around and
+    // therefore changing the rotation vector of the markers
+    lockMarkers();  // lock markers vector
+    for (MarkerMap::const_iterator it = markers.begin();
+         it != markers.end();
+         ++it)
+    {
+        int existingMrkId = it->first;
+        const Marker *existingMrk = &it->second;
+        
+        // try to find a matching marker in the "new markers" vector
+        for (vector<Marker *>::iterator newMrkIt = newMarkers.begin();
+             newMrkIt != newMarkers.end();
+             ++newMrkIt)
+        {
+            Marker *newMrk = *newMrkIt;
+            if (existingMrkId == newMrk->getId()) { // we found a matching marker
+                // update the new marker so that the order of vertices matches to
+                // the existing marker
+                newMrk->mapPoints(*existingMrk);
+            }
+        }
+    }
+    
+    unlockMarkers();    // unlock markers vector again
 }

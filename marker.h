@@ -83,6 +83,12 @@ public:
     Point2fVec getPoints() const { return points; }
     
     /**
+     * Rotate the vertices (the points vector) so that this marker's points
+     * match up with <otherMrk>'s vertex points.
+     */
+    void mapPoints(const Marker &otherMrk);
+    
+    /**
      * Set the points in <pVec>.
      */
     void setPoints(const Point2fVec &pVec) { points.assign(pVec.begin(), pVec.end()); }
@@ -120,9 +126,12 @@ public:
     /**
      * Update the 3D pose by rotation vector <r> and translation vector <t>.
      */
-    void updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing = false);
+    void updatePoseMat(const cv::Mat &r, const cv::Mat &t);
     
-//    void updateFromOtherMarker(const Marker *otherMrk);
+    /**
+     *
+     */
+    void updateForTracking(const Marker &other);
     
     /**
      * Return the 4x4 OpenGL 3D pose model-view matrix as pointer to
@@ -165,6 +174,12 @@ private:
      */
     void calcSmoothPoseVecs(float *r, float *t);
     
+    /**
+     * Calculate the 3D pose matrix from translation and rotation vectors <rVec> and
+     * <tVec>.
+     */
+    void calcPoseMat();
+    
     
     int id;                 // marker ID
     
@@ -184,7 +199,7 @@ private:
 //    float prevRotQuat[4];      // previous rotation quaternion
 //    std::list<cv::Mat> rVecHist;   // marker rotation history
     float *rVecHist;        // marker rotation history with N * 3 elements (euler vectors) for smoothing effect
-    float prevRVec[3];
+//    float prevRVec[3];
     
     float poseMat[16];      // OpenGL 4x4 matrix with model-view-transformation
 };

@@ -12,6 +12,9 @@
 #ifndef OCV_AR_TRACK_H
 #define OCV_AR_TRACK_H
 
+#include <map>
+#include <vector>
+
 #include <opencv2/core/core.hpp>
 
 #include "types.h"
@@ -49,6 +52,9 @@ public:
     const MarkerMap *getMarkers() const { return &markers; }
     
 private:
+    void correctMarkerVertexOrder(std::vector<Marker *> newMarkers);
+    
+    
     MarkerMap markers;
     bool markersLocked;
     

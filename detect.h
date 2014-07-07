@@ -115,6 +115,11 @@ public:
     void processFrame();
     
     /**
+     * After detection and identification of the markers, estimate their 3D pose.
+     */
+    void estimateMarkersPoses();
+    
+    /**
      * Get the output frame according to the "frame output level" set via
      * <setFrameOutputLevel()>. If this level is set to PROC_LEVEL_DEFAULT, it will
      * return NULL, otherwise it will return a weak pointer.
@@ -166,11 +171,6 @@ private:
      * Detection step 5 - identifiying markers.
      */
     void identifyMarkers();
-    
-    /**
-     * Detection step 5 - estimating the 3D pose of each found valid marker.
-     */
-    void estimatePositions();
     
     /**
      * Discard duplicate markers after detection step 4.

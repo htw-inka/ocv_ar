@@ -22,18 +22,18 @@
 
 using namespace ocv_ar;
 
-void printVec3TrigVals(float v[3]) {
-    float x1 = cosf(v[0]);
-    float y1 = sinf(v[0]);
-    float x2 = cosf(v[1]);
-    float y2 = sinf(v[1]);
-    float x3 = cosf(v[2]);
-    float y3 = sinf(v[2]);
-    
-    printf("> %f, %f\n", x1, y1);
-    printf("> %f, %f\n", x2, y2);
-    printf("> %f, %f\n", x3, y3);
-}
+//void printVec3TrigVals(float v[3]) {
+//    float x1 = cosf(v[0]);
+//    float y1 = sinf(v[0]);
+//    float x2 = cosf(v[1]);
+//    float y2 = sinf(v[1]);
+//    float x3 = cosf(v[2]);
+//    float y3 = sinf(v[2]);
+//    
+//    printf("> %f, %f\n", x1, y1);
+//    printf("> %f, %f\n", x2, y2);
+//    printf("> %f, %f\n", x3, y3);
+//}
 
 #pragma mark public methods
 
@@ -68,136 +68,106 @@ Marker::~Marker() {
     if (tVecHist) delete [] tVecHist;
 }
 
+void Marker::mapPoints(const ocv_ar::Marker &otherMrk) {
+    Point2fVec otherPts = otherMrk.getPoints();
+    int rotBy = 0;
+    
+    // find the rotation the rotation that yields minimum average distance
+    // between the vertex points of this marker and <otherMrk>
+    float minAvgDist = numeric_limits<float>::max();
+    for (int rot = 0; rot < 4; ++rot) { // for each possible rotation
+        float avgDist = 0.0f;
+        for (int p = 0; p < 4; ++p) {   // for each vertex point
+            // calculate squared distance to the (rotated) other vertex
+            avgDist += Tools::distSquared(points[p], otherPts[(p + rot) % 4]);
+        }
+        
+        avgDist /= 4;
+        
+        if (avgDist < minAvgDist) {
+            minAvgDist = avgDist;
+            rotBy = rot;
+        }
+    }
+    
+    // rotate our points to match the vertex order of <otherMrk>
+    printf("ocv_ar::Marker %d - rotating vertices by %d with min. avg. dist. %f\n", id, rotBy, minAvgDist);
+    rotatePoints(rotBy);
+}
+
 void Marker::updateDetectionTime() {
     detectMs = Tools::nowMs();
 }
 
-void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t, bool useSmoothing) {
+void Marker::updateForTracking(const Marker &other) {
+    setPoints(other.getPoints());
+    
+    const cv::Mat r = other.getRVec();
+    const cv::Mat t = other.getTVec();
+    
     if (!r.data || !t.data) return;
     
 	// r and t are double vectors from solvePnP
-	// convert them to floats!
+	// convert them to floats and save them as member
+    // variables <rVec> and <tVec>
 	r.convertTo(rVec, CV_32F);
 	t.convertTo(tVec, CV_32F);
-    
     
     float *rVecPtr = rVec.ptr<float>(0);
     float *tVecPtr = tVec.ptr<float>(0);
     
     float rVecEu[3];
     Tools::rotVecToEuler(rVecPtr, rVecEu);
-    float tempRVec[] = { rVecEu[0], rVecEu[1], rVecEu[2] };
-//    printf("ocv_ar::Marker %d - rvec1: %f, %f, %f\n", id, rVecPtr[0], rVecPtr[1], rVecPtr[2]);
     
-//    float rEuler[3];
-//    Tools::rotVecToEuler(rVecPtr, rEuler);
-//    printf("ocv_ar::Marker %d - euler: %f, %f, %f\n", id, rEuler[0], rEuler[1], rEuler[2]);
-//    Tools::eulerToRotVec(rEuler, rVecPtr);
-//    printf("ocv_ar::Marker %d - rvec2: %f, %f, %f\n", id, rVecPtr[0], rVecPtr[1], rVecPtr[2]);
-    
-//    float curRotQuat[4];
-//    Tools::rotVecToQuat(rVecPtr, curRotQuat);
-
-//    if (prevRotQuat[3] != 0.0f) {
-//        float intermRotQuat[4];
-//    
-//        float quatDot = Tools::quatDot(prevRotQuat, curRotQuat);
-//        if (quatDot < 0.0f) {
-//            curRotQuat[0] *= -1.0f;
-//            curRotQuat[1] *= -1.0f;
-//            curRotQuat[2] *= -1.0f;
-//            curRotQuat[3] *= -1.0f;
-//        }
-//        quatDot = Tools::quatDot(prevRotQuat, curRotQuat);
-//    
-//        Tools::slerp(prevRotQuat, curRotQuat, 0.5f, intermRotQuat);
-//        Tools::quatToRotVec(intermRotQuat, rVecPtr);
-//        printf("ocv_ar::Marker %d - quat1: %f, %f, %f, %f\n", id, curRotQuat[0], curRotQuat[1], curRotQuat[2], curRotQuat[3]);
-////        printf("ocv_ar::Marker %d - quat2: %f, %f, %f, %f\n", id, intermRotQuat[0], intermRotQuat[1], intermRotQuat[2], intermRotQuat[3]);
-//        printf("ocv_ar::Marker %d - dot: %f\n", id, quatDot);
-//    
-//        memcpy(prevRotQuat, intermRotQuat, sizeof(float) * 4);
-//        printf("quat dot: %f\n", Tools::quatDot(curRotQuat, prevRotQuat));
-//    } else {
-//        memcpy(prevRotQuat, curRotQuat, sizeof(float) * 4);
-//    }
-    
-//    float rotVecsAng = Tools::vec3Angle(prevRVec, rVecEu);
-//    
-//    if (rotVecsAng > 0.1f) {
-//        printf("ocv_ar::Marker %d - rvec1: %f, %f, %f\n", id, prevRVec[0], prevRVec[1], prevRVec[2]);
-//        printVec3TrigVals(prevRVec);
-//        printf("ocv_ar::Marker %d - angle: %f\n", id, rotVecsAng);
-//        printf("ocv_ar::Marker %d - rvec2: %f, %f, %f\n", id, rVecEu[0], rVecEu[1], rVecEu[2]);
-//        printVec3TrigVals(rVecEu);
-//        printf("---\n");
-//        
-////        rVecEu[0] += M_PI;
-//////        rVecEu[1] *= -1.0f;
-////        rVecEu[2] = M_PI - rVecEu[2];
-//        rVecEu[0] = prevRVec[0];
-//        rVecEu[1] = prevRVec[1];
-//        rVecEu[2] = prevRVec[2];
-//    }
-    
-    if (useSmoothing) {
-        pushVecsToHistory(rVecEu, tVecPtr);
+    pushVecsToHistory(rVecEu, tVecPtr);
         
-        if (pushedHistVecs >= OCV_AR_CONF_SMOOTHING_HIST_SIZE) {
-            calcSmoothPoseVecs(rVecEu, tVecPtr);
-        }
+    if (pushedHistVecs >= OCV_AR_CONF_SMOOTHING_HIST_SIZE) {
+        calcSmoothPoseVecs(rVecEu, tVecPtr);
+    }
         
-        Tools::eulerToRotVec(rVecEu, rVecPtr);
-    }
+    Tools::eulerToRotVec(rVecEu, rVecPtr);
     
-    prevRVec[0] = tempRVec[0];
-    prevRVec[1] = tempRVec[1];
-    prevRVec[2] = tempRVec[2];
-    
-//    printf("ocv_ar::Marker %d - rvec2: %f, %f, %f\n", id, rVecPtr[0], rVecPtr[1], rVecPtr[2]);
-    
-//    Tools::composeModelViewMatrix(tVecPtr, rVecPtr, poseMat);
+    // re-calculate the pose matrix from <rVec> and <tVec>
+    calcPoseMat();
+}
 
-////    cv::Mat cvPoseMat(4, 4, CV_32FC1, poseMat);
-////    cvPoseMat = cvPoseMat.inv();
-////    memcpy(poseMat, cvPoseMat.data, 16 * sizeof(float));
-
+void Marker::updatePoseMat(const cv::Mat &r, const cv::Mat &t) {
+    if (!r.data || !t.data) return;
     
-    // create rotation matrix
-	cv::Mat rotMat(3, 3, CV_32FC1);
-	cv::Rodrigues(rVec, rotMat);
+	// r and t are double vectors from solvePnP
+	// convert them to floats and save them as member
+    // variables <rVec> and <tVec>
+	r.convertTo(rVec, CV_32F);
+	t.convertTo(tVec, CV_32F);
     
-	/* BEGIN modified code from ArUco lib */
-    float para[3][4];
-    for (int i=0; i < 3; i++) {
-    	float *rotMatRow = rotMat.ptr<float>(i);
-        for (int j = 0; j < 3; j++) {
-        	para[i][j] = rotMatRow[j];
-        }
-    }
-    //now, add the translation
-    float *tVecData = tVec.ptr<float>(0);
-    para[0][3] = tVecData[0];
-    para[1][3] = tVecData[1];
-    para[2][3] = tVecData[2];
-    
-    // create and init modelview_matrix
-    memset(poseMat, 0, 16 * sizeof(float));	// init with zeros
-    
-    for (int i = 0; i < 3; i++) {
-    	float sign = (i != 2) ? 1.0f : -1.0f;
-    	for (int j = 0; j < 4; j++) {
-    		poseMat[i + j * 4] = sign * para[i][j];
-    	}
-    }
-    
-    poseMat[15] = 1.0f;
-    
-//    Tools::printFloatMat(poseMat, 4, 4);
-    /* END modified code from ArUco lib */
+    // re-calculate the pose matrix from <rVec> and <tVec>
+    calcPoseMat();
 }
 
 #pragma mark private methods
+
+void Marker::init() {
+    // set defaults
+    id = -1;
+    pushedHistVecs = 0;
+    
+	rVec.zeros(3, 1, CV_32F);
+	tVec.zeros(3, 1, CV_32F);
+    
+    //    memset(prevRotQuat, 0, sizeof(float) * 4);
+    
+    // create vectory history arrays
+    tVecHist = new float[OCV_AR_CONF_SMOOTHING_HIST_SIZE * 3];
+    rVecHist = new float[OCV_AR_CONF_SMOOTHING_HIST_SIZE * 3];
+    
+    // initialize them with zeros
+    memset(tVecHist, 0, sizeof(float) * OCV_AR_CONF_SMOOTHING_HIST_SIZE * 3);
+    memset(rVecHist, 0, sizeof(float) * OCV_AR_CONF_SMOOTHING_HIST_SIZE * 3);
+    
+	sortPoints();
+	calcShapeProperties();
+    updateDetectionTime();  // set to now
+}
 
 void Marker::rotatePoints(int rot) {
 	rotate(points.begin(), points.begin() + 4 - rot, points.end());
@@ -213,28 +183,6 @@ void Marker::sortPoints() {
 	if ((v1.x * v2.y) - (v1.y * v2.x) < 0.0) {
 		swap(points[1], points[3]);
 	}
-    
-    float minDist = std::numeric_limits<float>::max();
-    int rotBy = 0;
-    int ptIdx = 0;
-    for (Point2fVec::const_iterator it = points.begin();
-         it != points.end();
-         ++it)
-    {
-        float dist = Tools::lengthSquared(*it);
-        if (dist < minDist) {
-            minDist = dist;
-            rotBy = ptIdx;
-        }
-        
-        ptIdx++;
-    }
-    
-    printf("ocv_ar::Marker %d - rotating points by %d\n", id, rotBy);
-    
-    if (rotBy > 0) {
-        rotatePoints(rotBy);
-    }
 }
 
 void Marker::calcShapeProperties() {
@@ -253,29 +201,6 @@ void Marker::calcShapeProperties() {
 	}
     
 	perimeterRad = maxDist;
-}
-
-void Marker::init() {
-    // set defaults
-    id = -1;
-    pushedHistVecs = 0;
-    
-	rVec.zeros(3, 1, CV_32F);
-	tVec.zeros(3, 1, CV_32F);
-    
-//    memset(prevRotQuat, 0, sizeof(float) * 4);
-    
-    // create vectory history arrays
-    tVecHist = new float[OCV_AR_CONF_SMOOTHING_HIST_SIZE * 3];
-    rVecHist = new float[OCV_AR_CONF_SMOOTHING_HIST_SIZE * 3];
-    
-    // initialize them with zeros
-    memset(tVecHist, 0, sizeof(float) * OCV_AR_CONF_SMOOTHING_HIST_SIZE * 3);
-    memset(rVecHist, 0, sizeof(float) * OCV_AR_CONF_SMOOTHING_HIST_SIZE * 3);
-    
-	sortPoints();
-	calcShapeProperties();
-    updateDetectionTime();  // set to now
 }
 
 void Marker::pushVecsToHistory(const float *r, const float *t) {
@@ -382,4 +307,39 @@ void Marker::calcSmoothPoseVecs(float *r, float *t) {
     t[0] /= OCV_AR_CONF_SMOOTHING_HIST_SIZE;
     t[1] /= OCV_AR_CONF_SMOOTHING_HIST_SIZE;
     t[2] /= OCV_AR_CONF_SMOOTHING_HIST_SIZE;
+}
+
+void Marker::calcPoseMat() {
+    // create rotation matrix
+	cv::Mat rotMat(3, 3, CV_32FC1);
+	cv::Rodrigues(rVec, rotMat);
+    
+	/* BEGIN modified code from ArUco lib */
+    float para[3][4];
+    for (int i=0; i < 3; i++) {
+    	float *rotMatRow = rotMat.ptr<float>(i);
+        for (int j = 0; j < 3; j++) {
+        	para[i][j] = rotMatRow[j];
+        }
+    }
+    //now, add the translation
+    float *tVecData = tVec.ptr<float>(0);
+    para[0][3] = tVecData[0];
+    para[1][3] = tVecData[1];
+    para[2][3] = tVecData[2];
+    
+    // create and init modelview_matrix
+    memset(poseMat, 0, 16 * sizeof(float));	// init with zeros
+    
+    for (int i = 0; i < 3; i++) {
+    	float sign = (i != 2) ? 1.0f : -1.0f;
+    	for (int j = 0; j < 4; j++) {
+    		poseMat[i + j * 4] = sign * para[i][j];
+    	}
+    }
+    
+    poseMat[15] = 1.0f;
+    
+    //    Tools::printFloatMat(poseMat, 4, 4);
+    /* END modified code from ArUco lib */
 }
