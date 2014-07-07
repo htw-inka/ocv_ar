@@ -16,6 +16,7 @@
 #include "detect.h"
 
 #include "tools.h"
+#include "threading.h"
 
 using namespace ocv_ar;
 
@@ -229,12 +230,12 @@ void Detect::processFrame(bool enableMutex) {
     performThreshold();
     findContours();
     
-    if (enableMutex) lockMarkers();
+    if (enableMutex) Threading::mutexLock();
     
     findMarkerCandidates();
     identifyMarkers();
     
-    if (enableMutex) unlockMarkers();
+//    if (enableMutex) unlockMarkers();
 }
 
 void Detect::estimateMarkersPoses() {
@@ -266,15 +267,6 @@ cv::Mat *Detect::getOutputFrame() const {
 }
 
 #pragma mark private methods
-
-void Detect::lockMarkers() {
-    while (markersLocked) {};
-    markersLocked = true;
-}
-
-void Detect::unlockMarkers() {
-    markersLocked = false;
-}
 
 void Detect::preprocess() {
     // downscale the image

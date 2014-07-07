@@ -40,7 +40,6 @@ typedef std::pair<int, Marker> MarkerMapPair;
 class Track {
 public:
     Track(Detect *detectorPtr) : detector(detectorPtr),
-                                 markersLocked(false),
                                  detectionRunning(false)
     {};
     
@@ -58,7 +57,6 @@ private:
     
     
     MarkerMap markers;
-    bool markersLocked;
     
     bool detectionRunning;
     

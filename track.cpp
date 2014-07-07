@@ -12,6 +12,7 @@
 #include "track.h"
 
 #include "tools.h"
+#include "threading.h"
 
 using namespace ocv_ar;
 
@@ -29,17 +30,14 @@ void Track::detect(const cv::Mat *frame) {
 //    lockMarkers();  // lock markers map
     
     // detect and identify the markers
-    detector->processFrame(true);
+    detector->processFrame(true);   // will call Threading::mutexLock at the correct spot
     
     // correct the vertices of the found markers
-    lockMarkers();
-    detector->lockMarkers();
     correctMarkerVertexOrder(detector->getMarkers());
     
     // estimate the markers' 3D poses
     detector->estimateMarkersPoses();
 
-    detector->unlockMarkers();
     unlockMarkers();
     
 //    unlockMarkers();  // lock markers map
@@ -47,12 +45,11 @@ void Track::detect(const cv::Mat *frame) {
 }
 
 void Track::lockMarkers() {
-    while (markersLocked) {};
-    markersLocked = true;
+    Threading::mutexLock();
 }
 
 void Track::unlockMarkers() {
-    markersLocked = false;
+    Threading::mutexUnlock();
 }
 
 void Track::update() {

@@ -59,9 +59,6 @@ public:
      */
     ~Detect();
     
-    void lockMarkers();
-    void unlockMarkers();
-    
     /**
      * Prepare for input frames of size <frameW> x <frameH> with <frameChan>
      * color channels. Specify a conversion type <cvtType> for grayscale conversion of
@@ -200,8 +197,6 @@ private:
     
     
     bool prepared;                  // detector is prepared (<prepare()> called)?
-    
-    bool markersLocked;             // mutex variable to lock markers vector access
     
     int inputFrameCvtType;          // color conversion type for input frames
     
