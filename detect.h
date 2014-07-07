@@ -112,7 +112,7 @@ public:
     /**
      * Process the input frame to detect and identify markers.
      */
-    void processFrame(bool enableMutex = false);
+    void processFrame();
     
     /**
      * After detection and identification of the markers, estimate their 3D pose.

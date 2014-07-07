@@ -21,26 +21,39 @@ using namespace ocv_ar;
 void Track::detect(const cv::Mat *frame) {
     assert(detector && frame);
     
-    if (detectionRunning) return;
+    if (detectionRunning) return;   // check if detection is already running
     detectionRunning = true;
     
     // set the input frame
     detector->setInputFrame(frame, frame->channels() == 1);
     
-//    lockMarkers();  // lock markers map
-    
     // detect and identify the markers
-    detector->processFrame(true);   // will call Threading::mutexLock at the correct spot
+    detector->processFrame();
     
     // correct the vertices of the found markers
     correctMarkerVertexOrder(detector->getMarkers());
     
     // estimate the markers' 3D poses
     detector->estimateMarkersPoses();
-
-    unlockMarkers();
     
-//    unlockMarkers();  // lock markers map
+    lockMarkers();  // lock markers map
+    
+    // copy the found markers to the <newMarkers> vector
+    newMarkers.clear();
+    vector<Marker *> foundMarkers = detector->getMarkers();
+    for (vector<Marker *>::const_iterator it = foundMarkers.begin();
+         it != foundMarkers.end();
+         ++it)
+    {
+        Marker *mrk = *it;
+        newMarkers.push_back(Marker(*mrk)); // create new Marker object from <mrk>
+    }
+    
+    newMarkersFresh = true; // just detected, they're fresh!
+    
+    unlockMarkers();  // lock markers map
+    
+    // ready for new detection
     detectionRunning = false;
 }
 
@@ -55,9 +68,6 @@ void Track::unlockMarkers() {
 void Track::update() {
     lockMarkers();  // lock markers map
     
-    // get the vector of detected markers
-    vector<Marker *> newMarkers = detector->getMarkers();
-    
     // update already existing markers
     double now = Tools::nowMs();
     for (MarkerMap::iterator it = markers.begin();
@@ -70,28 +80,22 @@ void Track::update() {
         bool markerUpdated = false;
         
         // try to find a matching marker in the "new markers" vector
-        for (vector<Marker *>::const_iterator newMrkIt = newMarkers.begin();
+        for (vector<Marker>::const_iterator newMrkIt = newMarkers.begin();
              newMrkIt != newMarkers.end();
-             )  // no op -- vector::erase might be called below
+             ++newMrkIt)
         {
-            const Marker *newMrk = *newMrkIt;
-            if (existingMrkId == newMrk->getId()) { // we found a matching marker
+            if (existingMrkId == newMrkIt->getId()) { // we found a matching marker
 //                printf("ocv_ar::Track - updating marker %d\n", existingMrkId);
                 
                 // update the existing marker with the information of the "new" marker
-                existingMrk->updateForTracking(*newMrk);
+                existingMrk->updateForTracking(*newMrkIt);
                 
                 // update detection time to "now"
                 existingMrk->updateDetectionTime();
                 
-                // delete this marker from the "new markers" vector
-                newMrkIt = newMarkers.erase(newMrkIt);
-                
                 // set status
                 markerUpdated = true;
                 break;
-            } else {
-                ++newMrkIt; // advance
             }
         }
         
@@ -106,16 +110,19 @@ void Track::update() {
         }
     }
     
-    // add new markers
-    for (vector<Marker *>::const_iterator newMrkIt = newMarkers.begin();
-         newMrkIt != newMarkers.end();
-         ++newMrkIt)
-    {
-        const Marker *newMrk = *newMrkIt;
-        MarkerMapPair newMrkPair(newMrk->getId(), Marker(*newMrk));
-        markers.insert(newMrkPair);
-        printf("ocv_ar::Track - added new marker %d\n", newMrk->getId());
+    // add new markers the first time they were detected
+    if (newMarkersFresh) {
+        for (vector<Marker>::const_iterator newMrkIt = newMarkers.begin();
+             newMrkIt != newMarkers.end();
+             ++newMrkIt)
+        {
+            MarkerMapPair newMrkPair(newMrkIt->getId(), *newMrkIt);
+            markers.insert(newMrkPair);
+            printf("ocv_ar::Track - added new marker %d\n", newMrkIt->getId());
+        }
     }
+    
+    newMarkersFresh = false;
     
     unlockMarkers();    // unlock markers map
 }
@@ -126,7 +133,9 @@ void Track::correctMarkerVertexOrder(std::vector<Marker *> newMarkers) {
     // map the vertex order of currently found markers to previously found
     // markers. this prevents the vertex order from jumping around and
     // therefore changing the rotation vector of the markers
-//    lockMarkers();  // lock markers map
+    
+    // note that lockMarkers() needs to be called before!
+    
     for (MarkerMap::const_iterator it = markers.begin();
          it != markers.end();
          ++it)
@@ -146,6 +155,4 @@ void Track::correctMarkerVertexOrder(std::vector<Marker *> newMarkers) {
             }
         }
     }
-    
-//    unlockMarkers();    // unlock markers map again
 }

@@ -60,7 +60,9 @@ Marker::Marker(const Marker &other) {
     init();
     
     id = other.getId();
-    updatePoseMat(other.getRVec(), other.getTVec());
+    rVec = other.getRVec().clone();
+    tVec = other.getTVec().clone();
+//    updatePoseMat(other.getRVec(), other.getTVec());
 }
 
 Marker::~Marker() {
@@ -70,7 +72,7 @@ Marker::~Marker() {
 
 void Marker::mapPoints(const ocv_ar::Marker &otherMrk) {
     Point2fVec otherPts = otherMrk.getPoints();
-    if (otherPts.size() <= 0) return;
+//    if (otherPts.size() <= 0) return;
     
     int rotBy = 0;
     
@@ -93,8 +95,10 @@ void Marker::mapPoints(const ocv_ar::Marker &otherMrk) {
     }
     
     // rotate our points to match the vertex order of <otherMrk>
-//    printf("ocv_ar::Marker %d - rotating vertices by %d with min. avg. dist. %f\n", id, rotBy, minAvgDist);
-    rotatePoints(rotBy);
+    if (rotBy > 0) {
+//        printf("ocv_ar::Marker %d - rotating vertices by %d with min. avg. dist. %f\n", id, rotBy, minAvgDist);
+        rotatePoints(rotBy);
+    }
 }
 
 void Marker::updateDetectionTime() {
@@ -104,8 +108,8 @@ void Marker::updateDetectionTime() {
 void Marker::updateForTracking(const Marker &other) {
     setPoints(other.getPoints());
     
-    const cv::Mat r = other.getRVec();
-    const cv::Mat t = other.getTVec();
+    const cv::Mat r = other.getRVec().clone();
+    const cv::Mat t = other.getTVec().clone();
     
     if (!r.data || !t.data) return;
     

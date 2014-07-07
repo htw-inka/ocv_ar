@@ -40,7 +40,8 @@ typedef std::pair<int, Marker> MarkerMapPair;
 class Track {
 public:
     Track(Detect *detectorPtr) : detector(detectorPtr),
-                                 detectionRunning(false)
+                                 detectionRunning(false),
+                                 newMarkersFresh(false)
     {};
     
     void detect(const cv::Mat *frame);
@@ -55,7 +56,8 @@ public:
 private:
     void correctMarkerVertexOrder(std::vector<Marker *> newMarkers);
     
-    
+    std::vector<Marker> newMarkers;
+    bool newMarkersFresh;
     MarkerMap markers;
     
     bool detectionRunning;
