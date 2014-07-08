@@ -43,9 +43,8 @@ public:
     /**
      * Constructor. Pass a pointer to a detector instance <detectorPtr>.
      */
-    Track(Detect *detectorPtr) : detector(detectorPtr),
-                                 detectionRunning(false),
-                                 newMarkersFresh(false)
+    Track(Detect *detectorPtr) : newMarkersFresh(false), detectionRunning(false),
+                                 detector(detectorPtr)
     {
         Threading::init();
     };
