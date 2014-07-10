@@ -344,6 +344,8 @@ void Detect::findMarkerCandidates() {
 	possibleMarkers.clear();
 	PointVec  approxCurve;
     
+    vector<Marker> tmpPossibleMarkers;
+    
     // analyze each contour
 	for (ContourVec::const_iterator it = curContours.begin();
          it != curContours.end();
@@ -373,14 +375,14 @@ void Detect::findMarkerCandidates() {
 		Marker markerCand(approxCurve);
         
 		// Add the marker candidate
-		possibleMarkers.push_back(markerCand);
+		tmpPossibleMarkers.push_back(markerCand);
     }
 
 //    printf("ocv_ar::Detect - Num. marker candidates: %lu\n", possibleMarkers.size());
     
     // duplicate markers are possible, especially when double edges are detected
     // filter them out
-    discardDuplicateMarkers(possibleMarkers);
+    discardDuplicateMarkers(tmpPossibleMarkers, possibleMarkers);
     
 //    printf("ocv_ar::Detect - Num. marker candidates without duplicates: %lu\n", possibleMarkers.size());
     
@@ -464,36 +466,35 @@ void Detect::identifyMarkers() {
     }
 }
 
-void Detect::discardDuplicateMarkers(vector<Marker> &markerList) {
+void Detect::discardDuplicateMarkers(const vector<Marker> &inputMarkers, vector<Marker> &filteredMarkers) {
     const float maxDuplDistSquared = OCV_AR_CONF_MAX_DUPLICATE_DIST * OCV_AR_CONF_MAX_DUPLICATE_DIST;
     
-    vector<Marker>::iterator toDel = markerList.end();  // iterator for elem. that will be removed
-    for (vector<Marker>::iterator cur = markerList.begin();
-         cur != markerList.end();)
+    for (vector<Marker>::const_iterator cur = inputMarkers.begin();
+         cur != inputMarkers.end();
+         ++cur)
     {
-        for (vector<Marker>::iterator other = markerList.begin();
-             other != markerList.end();
+        bool hasDuplicate = false;
+        
+        for (vector<Marker>::const_iterator other = inputMarkers.begin();
+             other != inputMarkers.end();
              ++other)
         {
             if (cur == other) continue;
             
             const float dist = Tools::distSquared(cur->getCentroid(), other->getCentroid());
             
-            // mark for deletion if the distance is close and the current marker is bigger
+            // if the distance is close and the current marker is bigger, then the other marker will not be added
             if (dist <= maxDuplDistSquared && cur->getPerimeterRadius() < other->getPerimeterRadius()) {
-//                printf("ocv_ar::Detect - will remove duplicate! dist = %f, r1 = %f, r2 = %f \n",
+//                printf("ocv_ar::Detect - will not add duplicate! dist = %f, r1 = %f, r2 = %f \n",
 //                       dist, cur->getPerimeterRadius(), other->getPerimeterRadius());
                 
-                toDel = cur;
+                hasDuplicate = true;
                 break;
             }
         }
         
-        if (toDel != markerList.end()) {
-            cur = markerList.erase(toDel);  // advances the iterator
-            toDel = markerList.end();       // reset
-        } else {
-            ++cur;
+        if (!hasDuplicate) {
+            filteredMarkers.push_back(*cur);
         }
     }
 }

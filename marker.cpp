@@ -54,6 +54,8 @@ Marker::Marker(const Marker &other) {
 }
 
 Marker::~Marker() {
+//    printf("ocv_ar::Marker %d (%p) - deconstructor call\n", id, this);
+    
     if (rVecHist) delete [] rVecHist;
     if (tVecHist) delete [] tVecHist;
 }

@@ -29,13 +29,13 @@ void Track::detect(const cv::Mat *frame) {
     // detect and identify the markers
     detector->processFrame();
     
+    lockMarkers();  // lock markers map
+    
     // correct the vertices of the found markers
     correctMarkerVertexOrder(detector->getMarkers());
     
     // estimate the markers' 3D poses
     detector->estimateMarkersPoses();
-    
-    lockMarkers();  // lock markers map
     
     // copy the found markers to the <newMarkers> vector
     newMarkers.clear();
@@ -122,6 +122,8 @@ void Track::update() {
     }
     
     newMarkersFresh = false;
+    
+    printf("ocv_ar::Track - tracking %lu markers now\n", markers.size());
     
     unlockMarkers();    // unlock markers map
 }

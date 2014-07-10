@@ -30,7 +30,7 @@
 
 #define OCV_AR_CONF_FIND_CONTOUR_TYPE   CV_RETR_EXTERNAL    // is faster but can cause problems with low contrast images; try CV_RETR_LIST then
 #define OCV_AR_CONF_MIN_CONTOUR_PTS     4       // 4 because we need to find squares
-#define OCV_AR_CONF_MIN_CONTOUR_LENGTH  30.0f   // in pixels
+#define OCV_AR_CONF_MIN_CONTOUR_LENGTH  15.0f   // in pixels
 #define OCV_AR_CONF_MAX_DUPLICATE_DIST  2.0f    // in pixels
 
 /** pose estimation **/
