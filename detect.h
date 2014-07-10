@@ -175,7 +175,7 @@ private:
     /**
      * Discard duplicate markers after detection step 4.
      */
-    void discardDuplicateMarkers(vector<Marker> &markerList);
+    void discardDuplicateMarkers(const vector<Marker> &inputMarkers, vector<Marker> &filteredMarkers);
     
     /**
      * Helper function to copy the image from <srcFrame> to <outFrame> if the
