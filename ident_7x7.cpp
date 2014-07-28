@@ -62,7 +62,7 @@ bool Identificator7x7::readMarkerCode(const cv::Mat &area, Marker &marker) {
             int id = markerCodeToId(bitMatrix);
             marker.setId(id);
             marker.rotatePoints(rot);
-            printf("marker code ok at rot. %d: %d\n", rot, id);
+
             return true;
     	}
         

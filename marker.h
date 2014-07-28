@@ -83,12 +83,6 @@ public:
     Point2fVec getPoints() const { return points; }
     
     /**
-     * Rotate the vertices (the points vector) so that this marker's points
-     * match up with <otherMrk>'s vertex points.
-     */
-    void mapPoints(const Marker &otherMrk);
-    
-    /**
      * Set the points in <pVec>.
      */
     void setPoints(const Point2fVec &pVec) { points.assign(pVec.begin(), pVec.end()); }
