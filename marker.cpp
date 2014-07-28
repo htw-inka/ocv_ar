@@ -58,6 +58,10 @@ Marker::~Marker() {
     if (tVecHist) delete [] tVecHist;
 }
 
+void Marker::rotatePoints(int rot) {
+	rotate(points.begin(), points.begin() + rot + 1, points.end());
+}
+
 void Marker::mapPoints(const ocv_ar::Marker &otherMrk) {
     Point2fVec otherPts = otherMrk.getPoints();
     
@@ -166,10 +170,6 @@ void Marker::init() {
 	sortPoints();
 	calcShapeProperties();
     updateDetectionTime();  // set to now
-}
-
-void Marker::rotatePoints(int rot) {
-	rotate(points.begin(), points.begin() + 4 - rot, points.end());
 }
 
 void Marker::sortPoints() {

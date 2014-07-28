@@ -55,17 +55,20 @@ bool Identificator7x7::readMarkerCode(const cv::Mat &area, Marker &marker) {
     }
     
     // check marker code for all possible 4 rotations
+//    printf("---\n");
     for (int rot = 0; rot < 4; rot++) {
     	if (checkMarkerCode(bitMatrix)) { // found a valid marker code!
             // set the id and rotate the corner points
             int id = markerCodeToId(bitMatrix);
             marker.setId(id);
-            
+            marker.rotatePoints(rot);
+            printf("marker code ok at rot. %d: %d\n", rot, id);
             return true;
     	}
         
         Tools::matRot90CW(bitMatrix);   // rotate the matrix
     }
+//    printf("---\n");
     
     return false;
 }

@@ -104,6 +104,11 @@ public:
     void clearPoints() { points.clear(); }
     
     /**
+     * Rotate the corner points in the vector <rot> times.
+     */
+    void rotatePoints(int rot);
+    
+    /**
      * Return the controid calculated from the corner points.
      */
     cv::Point2f getCentroid() const { return centroid; }
@@ -151,11 +156,6 @@ private:
      * Sort the points in anti-clockwise order.
      */
     void sortPoints();
-    
-    /**
-     * Rotate the corner points in the vector <rot> times.
-     */
-    void rotatePoints(int rot);
     
     /**
      * Calculate the shape properties from the corner points like centroid
