@@ -60,34 +60,8 @@ Marker::~Marker() {
     if (tVecHist) delete [] tVecHist;
 }
 
-void Marker::mapPoints(const ocv_ar::Marker &otherMrk) {
-    Point2fVec otherPts = otherMrk.getPoints();
-    
-    int rotBy = 0;
-    
-    // find the rotation the rotation that yields minimum average distance
-    // between the vertex points of this marker and <otherMrk>
-    float minAvgDist = numeric_limits<float>::max();
-    for (int rot = 0; rot < 4; ++rot) { // for each possible rotation
-        float avgDist = 0.0f;
-        for (int p = 0; p < 4; ++p) {   // for each vertex point
-            // calculate squared distance to the (rotated) other vertex
-            avgDist += Tools::distSquared(points[p], otherPts[(p + rot) % 4]);
-        }
-        
-        avgDist /= 4;
-        
-        if (avgDist < minAvgDist) {
-            minAvgDist = avgDist;
-            rotBy = rot;
-        }
-    }
-    
-    // rotate our points to match the vertex order of <otherMrk>
-    if (rotBy > 0) {
-//        printf("ocv_ar::Marker %d - rotating vertices by %d with min. avg. dist. %f\n", id, rotBy, minAvgDist);
-        rotatePoints(rotBy);
-    }
+void Marker::rotatePoints(int rot) {
+	rotate(points.begin(), points.begin() + rot + 1, points.end());
 }
 
 void Marker::updateDetectionTime() {
@@ -168,10 +142,6 @@ void Marker::init() {
 	sortPoints();
 	calcShapeProperties();
     updateDetectionTime();  // set to now
-}
-
-void Marker::rotatePoints(int rot) {
-	rotate(points.begin(), points.begin() + 4 - rot, points.end());
 }
 
 void Marker::sortPoints() {

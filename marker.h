@@ -83,12 +83,6 @@ public:
     Point2fVec getPoints() const { return points; }
     
     /**
-     * Rotate the vertices (the points vector) so that this marker's points
-     * match up with <otherMrk>'s vertex points.
-     */
-    void mapPoints(const Marker &otherMrk);
-    
-    /**
      * Set the points in <pVec>.
      */
     void setPoints(const Point2fVec &pVec) { points.assign(pVec.begin(), pVec.end()); }
@@ -102,6 +96,11 @@ public:
      * Clear the corner points.
      */
     void clearPoints() { points.clear(); }
+    
+    /**
+     * Rotate the corner points in the vector <rot> times.
+     */
+    void rotatePoints(int rot);
     
     /**
      * Return the controid calculated from the corner points.
@@ -151,11 +150,6 @@ private:
      * Sort the points in anti-clockwise order.
      */
     void sortPoints();
-    
-    /**
-     * Rotate the corner points in the vector <rot> times.
-     */
-    void rotatePoints(int rot);
     
     /**
      * Calculate the shape properties from the corner points like centroid

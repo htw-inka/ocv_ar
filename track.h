@@ -77,14 +77,6 @@ public:
     const MarkerMap *getMarkers() const { return &markers; }
     
 private:
-    /**
-     * Correct the marker vertex order of the markers in <newMarkers> by mapping
-     * their corner points to already existing markers. This is important to
-     * have a stable marker vertex point order.
-     */
-    void correctMarkerVertexOrder(std::vector<Marker *> newMarkers);
-    
-    
     std::vector<Marker> newMarkers; // vector that holds Marker objects from the
                                     // last time when detect() was called
     bool newMarkersFresh;   // is true if detect() was called before and is set

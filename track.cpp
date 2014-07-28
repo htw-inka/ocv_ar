@@ -31,9 +31,6 @@ void Track::detect(const cv::Mat *frame) {
     
     lockMarkers();  // lock markers map
     
-    // correct the vertices of the found markers
-    correctMarkerVertexOrder(detector->getMarkers());
-    
     // estimate the markers' 3D poses
     detector->estimateMarkersPoses();
     
@@ -126,34 +123,4 @@ void Track::update() {
     printf("ocv_ar::Track - tracking %lu markers now\n", markers.size());
     
     unlockMarkers();    // unlock markers map
-}
-
-#pragma mark private methods
-
-void Track::correctMarkerVertexOrder(std::vector<Marker *> newMarkers) {
-    // map the vertex order of currently found markers to previously found
-    // markers. this prevents the vertex order from jumping around and
-    // therefore changing the rotation vector of the markers
-    
-    // note that lockMarkers() needs to be called before!
-    
-    for (MarkerMap::const_iterator it = markers.begin();
-         it != markers.end();
-         ++it)
-    {
-        int existingMrkId = it->first;
-        
-        // try to find a matching marker in the "new markers" vector
-        for (vector<Marker *>::iterator newMrkIt = newMarkers.begin();
-             newMrkIt != newMarkers.end();
-             ++newMrkIt)
-        {
-            Marker *newMrk = *newMrkIt;
-            if (existingMrkId == newMrk->getId()) { // we found a matching marker
-                // update the new marker so that the order of vertices matches to
-                // the existing marker
-                newMrk->mapPoints(it->second);
-            }
-        }
-    }
 }
