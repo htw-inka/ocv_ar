@@ -99,7 +99,7 @@ void Track::update() {
         // and if not, if it already time out
         if (!markerUpdated && now - existingMrk->getDetectionTimeMs() > OCV_AR_CONF_TRACKER_MARKER_TIMEOUT_MS) {
             // if so, remove it!
-            printf("ocv_ar::Track - lost marker %d\n", existingMrkId);
+//            printf("ocv_ar::Track - lost marker %d\n", existingMrkId);
             markers.erase(it++);    // safe map item delete
         } else {
             ++it;
@@ -114,13 +114,13 @@ void Track::update() {
         {
             MarkerMapPair newMrkPair(newMrkIt->getId(), *newMrkIt);
             markers.insert(newMrkPair);
-            printf("ocv_ar::Track - added new marker %d\n", newMrkIt->getId());
+//            printf("ocv_ar::Track - added new marker %d\n", newMrkIt->getId());
         }
     }
     
     newMarkersFresh = false;
     
-    printf("ocv_ar::Track - tracking %lu markers now\n", markers.size());
+//    printf("ocv_ar::Track - tracking %lu markers now\n", markers.size());
     
     unlockMarkers();    // unlock markers map
 }
