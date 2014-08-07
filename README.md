@@ -22,11 +22,8 @@ The project is still at an early stage and further documentation and usage examp
 
 The library usage is best explained with the well documented example projects, which are available for different plattforms in a separate [github repository 'ocv_ar-examples'](https://github.com/htw-inka/ocv_ar-examples).
 
+The library is also part of [ocv_ar-cocos2d](https://github.com/htw-inka/ocv_ar-cocos2d), a mobile augmented reality framework for iOS that uses [Cocos2D](http://www.cocos2d-swift.org/) for 3D visualization and user interaction.
+
 ## Acknoledgements and Contributions
 
 Thanks to Alexander Godoba for the 3D pose smoothing functions (especially the 3D rotation interpolation functions).
-
-## TODO
-
-* further documentation
-* usage examples (extra projects)
