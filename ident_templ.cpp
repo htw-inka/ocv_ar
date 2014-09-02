@@ -55,7 +55,7 @@ bool IdentificatorTemplMatch::readMarkerCode(const cv::Mat &area, Marker &marker
     
     if (!borderOk) return false;
     
-    printf("ocv_ar::IdentificatorTemplMatch - border checks ok\n");
+//    printf("ocv_ar::IdentificatorTemplMatch - border checks ok\n");
     
     // get only the "content" of <area>, i.e. the marker without borders
     int areaContentSize = area.cols - 2 * borderSize;
@@ -92,13 +92,26 @@ void IdentificatorTemplMatch::addTemplateImg(int id, const cv::Mat &img, bool st
     
     // strip border
     if (stripBorder) {
-        assert(img.rows == reqMarkerSize);  // "templ" will then be of size "reqMarkerSize - 2 * borderSize"
-        int imgContentSize = img.cols - 2 * borderSize;
+        const cv::Mat *imgToUse;
+        cv::Mat imgResized;
+        
+        if (img.cols != reqMarkerSize) {    // resize
+            cv::resize(img, imgResized, cv::Size(reqMarkerSize, reqMarkerSize));
+            imgToUse = &imgResized;
+        } else {
+            imgToUse = &img;
+        }
+
+        // "templ" will then be of size "reqMarkerSize - 2 * borderSize"
+        int imgContentSize = imgToUse->cols - 2 * borderSize;
         cv::Rect roi(borderSize, borderSize, imgContentSize, imgContentSize);
-        templ = img(roi);
+        templ = (*imgToUse)(roi);
     } else {
-        assert(img.rows == templSize);
-        img.copyTo(templ);
+        if (img.cols != templSize) {    // resize
+            cv::resize(img, templ, cv::Size(templSize, templSize));
+        } else {    // just copy
+            img.copyTo(templ);
+        }
     }
     
     // binarize, if necessary
@@ -160,7 +173,7 @@ bool IdentificatorTemplMatch::checkBorder(const cv::Mat &img, int dir, int off) 
         
         // count non zero values
         if (cv::countNonZero(cell) > minSetMarkerPixels) {  // we have "white" cell!
-            printf("ocv_ar::IdentificatorTemplMatch - check border failed for dir %d, offset %d\n", dir, off);
+//            printf("ocv_ar::IdentificatorTemplMatch - check border failed for dir %d, offset %d\n", dir, off);
             
             return false;
         }
@@ -197,14 +210,14 @@ bool IdentificatorTemplMatch::checkTemplateRotations(const cv::Mat &marker, cons
     }
     
     if (bestResultRot < 0) {
-        printf("ocv_ar::IdentificatorTemplMatch - no template match\n");
+//        printf("ocv_ar::IdentificatorTemplMatch - no template match\n");
         
         return false;
     }
     
 
-    printf("ocv_ar::IdentificatorTemplMatch - template match(es) with best result %f, rotation %d\n",
-           bestResult, bestResultRot);
+//    printf("ocv_ar::IdentificatorTemplMatch - template match(es) with best result %f, rotation %d\n",
+//           bestResult, bestResultRot);
     *validRot = bestResultRot;
     
     return true;
