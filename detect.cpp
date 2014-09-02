@@ -353,7 +353,7 @@ void Detect::findMarkerCandidates() {
 	{
 		PointVec contour = *it;
 		// Approximate to a polygon
-		float eps = contour.size() * 0.05f;
+		float eps = contour.size() * 0.1f;
 		cv::approxPolyDP(contour, approxCurve, eps, true);
         
 		// we are only interested in convex polygons that contain exactly four points
