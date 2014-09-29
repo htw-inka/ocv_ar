@@ -72,7 +72,7 @@ private:
      * OCV_AR_CONF_TEMPL_MATCH_MAX_ERROR_RATE could be found and will set the correct rotation in
      * <validRot>. Otherwise returns false.
      */
-    bool checkTemplateRotations(const cv::Mat &marker, const cv::Mat *templRotations, int *validRot);
+    float getBestMatchForRotations(const cv::Mat &marker, const cv::Mat *templRotations, int *bestRot);
     
     /**
      * Check if the one border in <img>, identified by direction <dir> (0 = horizontal, 1 = vertical)

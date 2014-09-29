@@ -64,19 +64,34 @@ bool IdentificatorTemplMatch::readMarkerCode(const cv::Mat &area, Marker &marker
     
     
     // do the template matching for all templates we have
+    float errRate;
+    float bestErrRate = 1.0f;   // init with worst possible rate
+    int rot;
+    int bestRot;
+    int bestFoundId;
     for (TemplateMap::iterator it = templates.begin();
          it != templates.end();
          ++it)
     {
-        int validRot;
-        if (checkTemplateRotations(areaContent, it->second, &validRot)) {  // found a matching template!
-            marker.setId(it->first);
-            marker.rotatePoints(validRot);
-            return true;
+        errRate = getBestMatchForRotations(areaContent, it->second, &rot);
+        
+        if (errRate < bestErrRate) {
+            bestErrRate = errRate;
+            bestRot = rot;
+            bestFoundId = it->first;
         }
     }
     
-    return false;
+    if (bestErrRate <= OCV_AR_CONF_TEMPL_MATCH_MAX_ERROR_RATE) {
+//        printf("ocv_ar::IdentificatorTemplMatch - best result: id %d, rate %f, rotation %d\n", bestFoundId, bestErrRate, bestRot);
+        
+        marker.setId(bestFoundId);
+        marker.rotatePoints(bestRot);
+        
+        return true;
+    } else {
+        return false;
+    }
 }
 
 void IdentificatorTemplMatch::addTemplateImg(int id, const cv::Mat &img, bool stripBorder, bool binarize) {
@@ -189,10 +204,10 @@ bool IdentificatorTemplMatch::checkBorder(const cv::Mat &img, int dir, int off) 
     return true;
 }
 
-bool IdentificatorTemplMatch::checkTemplateRotations(const cv::Mat &marker, const cv::Mat *templRotations, int *validRot) {
+float IdentificatorTemplMatch::getBestMatchForRotations(const cv::Mat &marker, const cv::Mat *templRotations, int *bestRot) {
     cv::Mat errorMat(marker.rows, marker.cols, CV_8UC1);
     
-    float bestResult = OCV_AR_CONF_TEMPL_MATCH_MAX_ERROR_RATE;    // init. with worst possible result
+    float bestResult = 1.0f;    // init. with worst possible result
     int bestResultRot = -1;
     
     for (int r = 0; r < 4; r++) {   // check all four rotations
@@ -202,23 +217,14 @@ bool IdentificatorTemplMatch::checkTemplateRotations(const cv::Mat &marker, cons
         // could the pixels that do not fit
         float errRate = (float)cv::countNonZero(errorMat) / (float)templSizeSq;
         
-        if (errRate <= OCV_AR_CONF_TEMPL_MATCH_MAX_ERROR_RATE && errRate < bestResult) {
+        if (errRate < bestResult) {
             // found the best result so far
             bestResult = errRate;
             bestResultRot = r;
         }
     }
     
-    if (bestResultRot < 0) {
-//        printf("ocv_ar::IdentificatorTemplMatch - no template match\n");
-        
-        return false;
-    }
+    *bestRot = bestResultRot;
     
-
-//    printf("ocv_ar::IdentificatorTemplMatch - template match(es) with best result %f, rotation %d\n",
-//           bestResult, bestResultRot);
-    *validRot = bestResultRot;
-    
-    return true;
+    return bestResult;
 }
